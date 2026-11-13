@@ -7,4 +7,7 @@
 }
 
 :root {
+  --color-border: #767676;
+  --detail-height: 16rem;
+  --detail-max-width: 40rem;
 }
