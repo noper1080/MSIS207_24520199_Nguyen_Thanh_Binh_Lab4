@@ -242,3 +242,115 @@ UI-only exercise: the "fail test" stage is skipped (Sec. 11). Verified with DevT
 All ambiguities are resolved in section 2 (D1-D6). Two points worth a quick confirmation:
 - **Q1:** D5 leaves unknown URLs (for example `/abc`) rendering the layout with an empty `main`. Acceptable until the 404 exercise?
 - **Q2:** D1 treats the existing Person route as part of this layout unchanged. Confirm you do not want it moved or renamed.
+
+---
+
+## Exercise 1.2.2: Refactoring for Master-Detail Views via React Router and CSS Grid
+
+Source: screenshot of Exercise 1.2.2 only. No implementation code in this section.
+
+### 1. Requirements extracted from the screenshot
+
+| # | Requirement (from screenshot) | Rule check (project-rules.md) |
+|---|---|---|
+| R1 | Responsive CSS Grid layout: `grid-template-columns: minmax(280px, 1fr) 2fr` | Sec. 5: mobile-first, one column by default, the two-column grid only from a wider breakpoint; no horizontal scroll at 375px. **Conflict**: the slide states the grid without a breakpoint |
+| R2 | Safe URL param extraction with `useParams()` | Sec. 5: params are strings |
+| R3 | Locate the entity via `people.find(p => p.id === id)`; render a 404 state when the id is invalid | Sec. 5: `NotFoundState` with `role="alert"` and a link back; no crash, no blank page |
+| R4 | Detail attributes as a semantic definition list `dl`/`dt`/`dd` | Sec. 3 |
+
+Differences between the screenshot code and the rules (rules win):
+- `className="person-details"` is a plain global class. We use a CSS Module (Sec. 9).
+- The grid in R1 is applied only from a breakpoint (D4), with a single column below it.
+- The snippet shows only the detail component. A two-column master-detail layout needs a master list, which the slide does not show; D3 defines the minimum.
+- The snippet defines `PersonDetail` as an arrow-function constant with a `people` prop. Our component must stay a default export so the Ex 1.1 `lazy()` import keeps working; the `people` prop is kept.
+
+Out of scope: search, filters, sorting, pagination, edit forms, any fetching (data is hardcoded), extra fields beyond name and role.
+
+### 2. Decisions
+
+- D1: Data lives in `client/src/lib/people.js`: 5 clearly fictional people `{ id, name, role }` with **string** ids (`'1'` to `'5'`). `App.jsx` imports it and passes it as the `people` prop (as in the snippet).
+- D2: Lookup is a pure helper `findPersonById(people, id)` in the same module. It calls `people.find(p => p.id === id)` and returns the person or `undefined`. Pure logic means test-first (Sec. 11).
+- D3: Routing. The Ex 1.1 `/person` route is replaced by:
+  - `/people` (parent): renders the master-detail shell (`People` page) with the list on one side and `<Outlet />` on the other.
+  - `/people` index: a short prompt "Select a person from the list."
+  - `/people/:id`: `PersonDetail` inside `<Suspense fallback={<Skeleton />}>`; **still lazy**, so Ex 1.1 behavior is preserved.
+  - The nav link "Person" becomes "People" (`to="/people"`, no `end`, so it stays active on child routes).
+- D4: Breakpoint `48rem` (768px). Below it: one column. From it: `grid-template-columns: minmax(280px, 1fr) 2fr`.
+- D5: The master list is `<nav aria-label="People">` containing a `ul` of `NavLink`s to `/people/{id}` with the callback `className`, `key={person.id}`. This keeps the current person visibly active.
+- D6: `NotFoundState` is a component in `client/src/components/`: `role="alert"`, a short message, and a `Link` back to `/people`. It is rendered by `PersonDetail` when the lookup finds nothing (for example `/people/999`).
+- D7: `PersonDetail` keeps its fixed box (`--detail-height`, `--detail-max-width`) so the Ex 1.1 skeleton stays dimension-matched (CLS = 0). It now reads `useParams()`, looks the person up, and renders the `dl` (name, role) with `Fragment key` pairs.
+- D8: Heading order: `h1` in the layout; `h2` "People" in the master column; `h2` with the person's name in the detail.
+
+### 3. Task list
+
+#### 1.2.2-01: Contract and WBS
+- **Goal:** Freeze the scope above.
+- **Files touched:** `TASK_DECOMPOSITION.md`
+- **Commit:** `docs(spec): add WBS for exercise 1.2.2 master-detail routing`
+
+#### 1.2.2-02: Failing tests for the lookup helper (test stage)
+- **Contract:** `findPersonById(people, id)` returns the person whose `id === id` (strict, string compare), otherwise `undefined`; never throws.
+- **Test cases (Vitest):**
+  1. existing id `'1'` returns that person;
+  2. every seeded id is found;
+  3. unknown id `'999'` returns `undefined`;
+  4. `undefined` id returns `undefined`;
+  5. number `1` does not match `'1'` (ids are strings, strict equality);
+  6. empty list returns `undefined`.
+- **Files touched:** `client/src/lib/people.test.js`
+- **Acceptance:** `npx vitest run` fails (module missing). Red is expected.
+- **Commit:** `test(people): add failing tests for findPersonById`
+
+#### 1.2.2-03: Data and lookup helper (logic)
+- **Contract:** JSDoc typedef `Person { id: string, name: string, role: string }`; `export const PEOPLE` (5 items); `export function findPersonById(people, id)`.
+- **Files touched:** `client/src/lib/people.js`
+- **Acceptance:** `npx vitest run` is green; no UI code in this commit.
+- **Commit:** `feat(people): add fictional people data and findPersonById`
+
+#### 1.2.2-04: Master-detail grid (CSS)
+- **Contract:** `People.module.css`: mobile-first, one column with `gap`; at `@media (min-width: 48rem)` `grid-template-columns: minmax(280px, 1fr) 2fr`. Master list as a plain vertical list. Reuse existing tokens; hex colors only in `:root`.
+- **Files touched:** `client/src/pages/People.module.css`
+- **Acceptance:** Class names `.layout`, `.list` exist and are used by 1.2.2-05; no horizontal scroll at 375px once wired.
+- **Commit:** `style(people): add responsive master-detail grid`
+
+#### 1.2.2-05: Master-detail routes, detail lookup and 404 state (JSX)
+- **Contract:**
+  - `People.jsx` (default export): `section` with `h2`, the `nav` list (D5) and `<Outlet />`, using the `.layout` grid; takes a `people` prop.
+  - `NotFoundState.jsx` (D6).
+  - `PersonDetail.jsx` refactor (D7): `({ people })`, `useParams()`, `findPersonById`, `NotFoundState` fallback, `dl` with name and role, keeps `styles.detail`.
+  - `App.jsx` routes per D3 (the `person` route is removed).
+  - `Layout.jsx`: nav link "People" to `/people`.
+- **Files touched:** `client/src/pages/People.jsx`, `client/src/components/NotFoundState.jsx`, `client/src/pages/PersonDetail.jsx`, `client/src/App.jsx`, `client/src/components/Layout.jsx`
+- **Acceptance:**
+  - `/people` shows the list and the prompt; `/people/2` shows that person; `/people/999` shows the 404 state with a working link back; no crash and no blank page.
+  - The detail chunk is still separate and the skeleton still shows while it loads (Ex 1.1 intact).
+  - Exactly one `h1` and one `main`; list and detail are keyboard reachable; the selected person is highlighted by more than color.
+  - No `key={index}`, no inline style, no banned router syntax.
+- **Commit:** `feat(router): add master-detail people routes with 404 state`
+
+#### 1.2.2-06: Verification (no code)
+- **Steps:**
+  1. 375px: one column, no horizontal scroll. 768px and wider: two columns.
+  2. Valid id, invalid id (`/people/999`), and the index route all render sensibly; reload on `/people/3` works.
+  3. Keyboard only through list and detail; the 404 link is reachable.
+  4. Ex 1.1 regression: Slow 3G still shows the skeleton, and CLS stays 0.
+  5. `npx vitest run` green; Sec. 13 `git grep` checkpoints clean.
+- **Commit:** none.
+
+### 4. Commit plan summary
+
+| Order | Type | Task |
+|---|---|---|
+| 1 | docs(spec) | 1.2.2-01 |
+| 2 | test | 1.2.2-02 |
+| 3 | feat | 1.2.2-03 |
+| 4 | style | 1.2.2-04 |
+| 5 | feat | 1.2.2-05 |
+
+The style commit comes before the JSX commit so the build never references a missing CSS file. The Sprint 1 "detail route handling" feat commit is 1.2.2-05.
+
+### 5. Open questions
+
+All ambiguities are resolved in section 2 (D1-D8). Please confirm two points:
+- **Q1:** The slide shows no master list, but a two-column grid needs one. D3 and D5 add the smallest possible list. OK?
+- **Q2:** D3 removes the Ex 1.1 URL `/person` and renames the nav link to "People". The lazy loading, Suspense and skeleton from Ex 1.1 stay on `/people/:id`. OK?
