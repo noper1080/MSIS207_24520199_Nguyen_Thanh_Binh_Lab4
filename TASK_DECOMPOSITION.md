@@ -354,3 +354,76 @@ The style commit comes before the JSX commit so the build never references a mis
 All ambiguities are resolved in section 2 (D1-D8). Please confirm two points:
 - **Q1:** The slide shows no master list, but a two-column grid needs one. D3 and D5 add the smallest possible list. OK?
 - **Q2:** D3 removes the Ex 1.1 URL `/person` and renames the nav link to "People". The lazy loading, Suspense and skeleton from Ex 1.1 stay on `/people/:id`. OK?
+
+---
+
+## Exercise 1.3: Legacy Validation Anti-Patterns (Deconstructing useEffect Chaining)
+
+Source: screenshot of Exercise 1.3 only. No implementation code in this section.
+
+### 1. What the screenshot is
+
+This slide is an **analysis exercise**, not a build exercise. It describes a legacy `InputField` + `SimpleForm` pair that validates through five chained `useEffect` hooks, shows an execution trace of one keystroke, and lists three flaws. It gives **no legacy source code** and **no requirement to build or fix a form**. Per Sec. 0 (scope guard) nothing is implemented here; the form engine belongs to the later Context-form exercises.
+
+Requirements extracted:
+
+| # | Item on the slide | Meaning |
+|---|---|---|
+| F1 | Cascading re-renders: state synchronization between `InputField` and `SimpleForm` triggers up to 5 redundant render cycles per keystroke | One `onChange` leads to a chain of effects, each calling `setState` and causing another render |
+| F2 | Race conditions: rapid typing makes asynchronous effect updates resolve out of order and corrupt state | Late results of an older keystroke overwrite the newer one |
+| F3 | Infinite loop risk: mutual state dependencies can trigger `Maximum update depth exceeded` | Parent effect updates child, child effect updates parent, with no stable stopping condition |
+
+Observations about the slide (flagged, not guessed):
+- The trace command says `--target Ex1.6`, while the slide is titled Exercise 1.3. The trace belongs to a legacy example that a later exercise refers to. It does not change the scope of 1.3.
+- The slide says "5 useEffect hooks" in the heading and the trace lists five (`#1` to `#5`).
+
+### 2. Analysis: reading the execution trace
+
+| Step in the trace | Effect | What it does | Why it is wrong |
+|---|---|---|---|
+| `onChange('a')`, `InputField` renders (local state) | none | The child keeps its own copy of the value | Two sources of truth for one value |
+| `useEffect #1 syncToParent()` | #1 | Copies the child value up with `setState` in the parent | Mirrored state; forces a second render (`SimpleForm`) |
+| `useEffect #2 validateField()` | #2 | Computes an error and stores it with `setState` | Validation is derived data; it needs no state |
+| `useEffect #3 calcFormValidity()` | #3 | Computes form validity and stores it with `setState` | Derived data again; chained after #2 |
+| `useEffect #4 syncErrorsToChild()` | #4 | Pushes errors down to the child with `setState` | Parent-to-child state sync causes the child re-render |
+| `InputField re-render (errors)`, `useEffect #5 autoScrollToError()` | #5 | A DOM side effect that depends on the errors state | Only runs after the whole chain; adds a render dependency |
+| `CASCADE DETECTED: 5 re-renders / 1 keypress` | n/a | Result of the chain above | The same information could be computed in one render |
+
+Why each flaw happens:
+- **F1:** every `setState` inside an effect schedules a new render, and the next effect depends on that render. Five chained effects give a five-step render chain.
+- **F2:** an effect that finishes later than a newer keystroke writes stale values, because effects are scheduled after render and nothing cancels the older one.
+- **F3:** when the parent effect depends on child state and the child effect depends on parent state, and either writes a new object or array each time, the dependency changes every render, so React stops with `Maximum update depth exceeded`.
+
+### 3. Mapping to the project rules (what replaces each effect)
+
+| Legacy effect | Replacement in this project | Rule |
+|---|---|---|
+| #1 `syncToParent` | Delete it. One `values` state in `FormProvider`; `InputField` reads and writes through context, with no local copy | Sec. 6, Sec. 4 |
+| #2 `validateField` | `errors = validateForm(values)` computed during render | Sec. 2, Sec. 6 |
+| #3 `calcFormValidity` | `isValid = Object.keys(errors).length === 0` computed during render | Sec. 6 |
+| #4 `syncErrorsToChild` | Delete it. The child reads `errors` from context | Sec. 6 |
+| #5 `autoScrollToError` | Not requested by any current exercise; not built (scope guard). If ever needed, it runs in the submit handler, not in an effect | Sec. 0, Sec. 2 |
+
+Resulting target for the later form exercise: one keystroke leads to one `setState` and one render pass. F2 disappears because validation is synchronous and pure (no async, nothing to resolve out of order). F3 disappears because no state is derived from other state.
+
+### 4. Task list
+
+#### 1.3-01: Analysis section (documentation only)
+- **Goal:** Record the flaws, the trace walkthrough and the replacement mapping as the contract for the later form exercises.
+- **Files touched:** `TASK_DECOMPOSITION.md`
+- **Acceptance:** Sections 1 to 3 above are present; no code, no new dependency, no new file.
+- **Verification:** `git show --stat` lists only this file.
+- **Commit:** `docs(spec): add WBS for exercise 1.3 useEffect validation anti-patterns`
+
+No test, JSX or CSS tasks exist for this exercise. The test stage (Sec. 11) applies to `validateForm`, which belongs to the later form exercise.
+
+### 5. Guard rails carried into the form exercises (not tasks here)
+
+- `git grep -n "useEffect" -- client/src/context client/src/components client/src/lib` should show no effect used for validation or derived data.
+- React Profiler (Sec. 13): one keystroke produces one commit of the form tree.
+- `validateForm` stays a pure module in `client/src/lib/` with its own Vitest cases (Sec. 6).
+
+### 6. Open questions
+
+- **Q1:** Is the deliverable for 1.3 only this written analysis? Decision: yes, because the slide requests no implementation. If your lab handout asks for a written answer or a legacy demo, send me its text.
+- **Q2:** `AI_FAILURE_AUDIT.md` needs at least 3 real, verified AI defects (Sec. 13). It must not be invented from this slide. We will log real defects found during the form exercises, or earlier ones if you have them.
