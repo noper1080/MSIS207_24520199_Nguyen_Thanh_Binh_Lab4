@@ -162,3 +162,83 @@ Q1-Q6 are resolved in section 2 (D1-D6). Remaining:
 
 - **Q7 (dependency allow-list):** Vite needs `@vitejs/plugin-react` to compile JSX, and it is not in the allow-list of Sec. 1. Proposed: treat it as part of `vite` and allow it. Confirm before P1.
 - **Q8 (`createPortal` in `Skeleton`):** Portaling text into `#live-status` during render is the simplest way to announce without state or effects. If you prefer, the fallback could instead contain visually hidden text with `role="status"` (simpler, but then the live region is not persistent, which Sec. 3 discourages). Default: portal.
+
+---
+
+## Exercises 1.2 and 1.2.1: Declarative Syntax Updates and React Router v7 Layout Architecture
+
+Source: screenshot of Exercises 1.2 & 1.2.1 only (one slide covers both, treated as one set of requirements). No implementation code in this section.
+
+### 1. Requirements extracted from the screenshot
+
+| # | Requirement (from screenshot) | Rule check (project-rules.md) | Current state |
+|---|---|---|---|
+| R1 | Replace `<Switch>` with `<Routes>` as the top-level container | Sec. 2, Sec. 5 | Done (P3) |
+| R2 | Routes use `element={<Layout />}` (JSX passed directly) | Sec. 2 | Done (P3) |
+| R3 | Nested layout: parent `<Route path="/" element={<Layout />}>`; children `<Route index element={<Home />} />` and `<Route path="about" element={<About />} />` | Sec. 5 | Partial: parent has no `path`, Home is an inline `<h2>`, no `about` route |
+| R4 | `Layout` renders child routes through `<Outlet />` | Sec. 5: inside `<main>`, one root or Fragment | Done (P2) |
+| R5 | `NavLink` with callback `className={({ isActive }) => ...}` for active highlighting | Sec. 5: link to `/` uses `end` | Done for Home and Person; no About link |
+| R6 | Import `Routes, Route, NavLink, Outlet` from `'react-router'` | Sec. 5 | Done |
+
+Differences between the screenshot code and the rules (the rules win, the screenshot is not copied blindly):
+- The screenshot's Home `NavLink` has no `end`. Without it, Home would look active on every route. We keep `end`.
+- The screenshot's `Layout` returns `<nav>` and `<Outlet />` as two siblings without a wrapper and without `<main>`. Sec. 5 requires one root or a Fragment, and `Outlet` inside `<main>`. Our existing `Layout` already complies.
+- The screenshot uses plain class names `'active'` and `''`. We keep CSS Module classes (Sec. 9).
+- The screenshot names the file `App.jsx` (it matches our file). `Home` and `About` are not defined in the screenshot, so they are new page components.
+
+Out of scope: a catch-all/404 route, lazy loading for the new pages, any data fetching, any extra nav items beyond Home, Person, About.
+
+### 2. Decisions
+
+- D1: Treat 1.2 and 1.2.1 as one set. Reuse what exists (R1, R2, R4, R5, R6) and only add what is missing (R3 and the About link).
+- D2: `Home` and `About` are separate default-exported components in `client/src/pages/`, each with one `<h2>` and one short fictional sentence. They are eager (not lazy), since lazy loading is not requested here.
+- D3: Adopt `path="/"` on the parent route as in the screenshot. Behavior is identical to the current pathless layout route.
+- D4: Keep `end` on the Home link (rule over screenshot). Keep the CSS Module active style already in `Layout.module.css`.
+- D5: Do not add a `*` route. Unknown URLs are handled by the later "detail route handling" exercise with `NotFoundState`.
+- D6: Add an `About` link to the nav after Person. No other nav changes.
+
+### 3. Task list
+
+UI-only exercise: the "fail test" stage is skipped (Sec. 11). Verified with DevTools. The Sprint 1 target of 2 feat commits is already met by the earlier layout and routes commits, so the commit below adds to it.
+
+#### 1.2-01: Contract and WBS
+- **Goal:** Freeze the scope above.
+- **Files touched:** `TASK_DECOMPOSITION.md`
+- **Acceptance:** Committed before any code of this exercise.
+- **Commit:** `docs(spec): add WBS for exercises 1.2 and 1.2.1 router layout`
+
+#### 1.2-02: Home, About, nested routes and About link (JSX)
+- **Goal:** Complete the declarative layout structure of the screenshot (R3, R5) in one change.
+- **Contract:**
+  - `Home` (`client/src/pages/Home.jsx`) and `About` (`client/src/pages/About.jsx`): default exports, each a `<section>` with one `<h2>` and one short `<p>`; no `<h1>` (layout owns it).
+  - `App.jsx`: parent `<Route path="/" element={<Layout />}>`; children `<Route index element={<Home />} />`, the existing lazy `person` route (unchanged), and `<Route path="about" element={<About />} />`. Only `Routes` and `Route` from `'react-router'`.
+  - `Layout.jsx`: add `<li><NavLink to="/about" className={({ isActive }) => ...}>About</NavLink></li>` after Person, same callback pattern; Home keeps `end`.
+- **Files touched:** `client/src/pages/Home.jsx`, `client/src/pages/About.jsx`, `client/src/App.jsx`, `client/src/components/Layout.jsx`
+- **Acceptance:**
+  - `/` shows Home, `/about` shows About, `/person` still shows the lazy `PersonDetail`; direct load and reload of `/about` works.
+  - Exactly one link looks active per route; Home is not active on `/about` or `/person`.
+  - Headings sequential (`h1` in layout, `h2` in pages); no inline style; no banned router syntax.
+- **Verification:** Type each URL in the address bar; Tab and Enter through the nav; Elements panel shows `aria-current="page"` on the active link; `git grep` for banned patterns.
+- **Commit:** `feat(router): add home and about routes with nested layout navigation`
+
+#### 1.2-03: Verification (no code)
+- **Steps:**
+  1. Each route renders inside the same `<main>` through `<Outlet />`; the nav and `h1` do not remount or flicker.
+  2. One `<h1>` and one `<main>` on every page.
+  3. Active link: visible by more than color (bold and lines already used).
+  4. 375px: no horizontal scroll; keyboard only works.
+  5. `git grep` checkpoints from Sec. 13.
+- **Commit:** none.
+
+### 4. Commit plan summary
+
+| Order | Type | Task |
+|---|---|---|
+| 1 | docs(spec) | 1.2-01 |
+| 2 | feat | 1.2-02 |
+
+### 5. Open questions
+
+All ambiguities are resolved in section 2 (D1-D6). Two points worth a quick confirmation:
+- **Q1:** D5 leaves unknown URLs (for example `/abc`) rendering the layout with an empty `main`. Acceptable until the 404 exercise?
+- **Q2:** D1 treats the existing Person route as part of this layout unchanged. Confirm you do not want it moved or renamed.
