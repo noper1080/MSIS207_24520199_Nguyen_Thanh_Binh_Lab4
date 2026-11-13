@@ -26,6 +26,14 @@ export default function Layout() {
                 Person
               </NavLink>
             </li>
+            <li>
+              <NavLink
+                to="/about"
+                className={({ isActive }) => (isActive ? styles.active : styles.link)}
+              >
+                About
+              </NavLink>
+            </li>
           </ul>
         </nav>
       </header>
