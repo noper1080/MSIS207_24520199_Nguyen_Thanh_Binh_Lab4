@@ -20,10 +20,10 @@ export default function Layout() {
             </li>
             <li>
               <NavLink
-                to="/person"
+                to="/people"
                 className={({ isActive }) => (isActive ? styles.active : styles.link)}
               >
-                Person
+                People
               </NavLink>
             </li>
             <li>

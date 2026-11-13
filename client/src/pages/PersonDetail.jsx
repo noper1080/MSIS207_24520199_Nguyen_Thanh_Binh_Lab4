@@ -1,23 +1,31 @@
 import { Fragment } from 'react';
+import { useParams } from 'react-router';
+import NotFoundState from '../components/NotFoundState.jsx';
+import { findPersonById } from '../lib/people.js';
 import styles from './PersonDetail.module.css';
 
-const PERSON = {
-  name: 'Ada Example',
-  details: [
-    { id: 'role', label: 'Role', value: 'Fictional engineer' },
-    { id: 'email', label: 'Email', value: 'ada@example.com' },
-  ],
-};
+/**
+ * Detail view of the person selected by the :id URL param. Default export so it can be lazy-loaded.
+ * @param {{ people: import('../lib/people.js').Person[] }} props
+ */
+export default function PersonDetail({ people }) {
+  const { id } = useParams();
+  const person = findPersonById(people, id);
 
-/** Page-level detail view of one fictional person. Default export so it can be lazy-loaded. */
-export default function PersonDetail() {
+  if (!person) return <NotFoundState />;
+
+  const details = [
+    { key: 'name', label: 'Name', value: person.name },
+    { key: 'role', label: 'Role', value: person.role },
+  ];
+
   return (
     <article className={styles.detail}>
-      <h2>{PERSON.name}</h2>
+      <h2>{person.name}</h2>
       <dl>
-        {PERSON.details.map((item) => (
-          <Fragment key={item.id}>
-            <dt>{item.label}</dt>
+        {details.map((item) => (
+          <Fragment key={item.key}>
+            <dt>{item.label}:</dt>
             <dd>{item.value}</dd>
           </Fragment>
         ))}
