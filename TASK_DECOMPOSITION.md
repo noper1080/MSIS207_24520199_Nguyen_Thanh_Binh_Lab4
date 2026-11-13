@@ -427,3 +427,137 @@ No test, JSX or CSS tasks exist for this exercise. The test stage (Sec. 11) appl
 
 - **Q1:** Is the deliverable for 1.3 only this written analysis? Decision: yes, because the slide requests no implementation. If your lab handout asks for a written answer or a legacy demo, send me its text.
 - **Q2:** `AI_FAILURE_AUDIT.md` needs at least 3 real, verified AI defects (Sec. 13). It must not be invented from this slide. We will log real defects found during the form exercises, or earlier ones if you have them.
+
+---
+
+## Exercise 1.7.1: Data Fetching and Express Hygiene
+
+Source: screenshot of Exercise 1.7.1 only. No implementation code in this section.
+
+### 1. Requirements extracted from the screenshot
+
+| # | Requirement (from screenshot) | Rule check (project-rules.md) |
+|---|---|---|
+| R1 | Custom hook `useForumMessages.js`: state logic extracted, `AbortController` signal prevents memory leaks and out-of-order race conditions on fast channel switching | Sec. 7 client hook pattern |
+| R2 | Semantic UI: `<React.Fragment key={msg.id}>` inside a definition list `<dl>` | Sec. 3, Sec. 7: named `Fragment` import, text only |
+| R3 | CORS middleware in Express via `cors()` | Sec. 7: `cors({ origin: process.env.CLIENT_ORIGIN ?? 'http://localhost:5173' })`, then `express.json()`, then routes |
+| R4 | Payload security: strict POST payload validation on incoming requests | Sec. 7, Sec. 8, Sec. 10: pure `validateMessage(body)`, whitelist, 400 on failure |
+
+Differences between the screenshot code and the rules (rules win, the screenshot is not copied blindly):
+- **No `res.ok` check:** the snippet calls `res.json()` on any response. Sec. 7 requires checking `res.ok` and throwing on non-2xx (it is on the audit watchlist).
+- **Errors only go to `console.error`:** there is no error state, so the UI cannot tell the user. Sec. 3 requires `role="alert"` and a way to recover.
+- **Hook returns only `msgs`:** no loading or error information. Sec. 7 requires `{ status: 'IDLE' | 'LOADING' | 'SUCCESS' | 'ERROR', data, error }` (see D1 and Q1).
+- **Relative URL `/api/...`:** Sec. 7 requires the base URL from `import.meta.env.VITE_API_URL`.
+- **Aborted results:** the snippet's `AbortError` handling is correct in spirit (silent), and we keep it; we also ignore any result of an aborted request.
+- **`import { useState, useEffect }` with a promise chain:** fine, but the 4-state hook is written with `async/await` inside the effect.
+
+Out of scope (not in the screenshot): MongoDB, authentication, a client-side POST form, message editing or deletion, pagination, timestamps in the UI, any dependency beyond the allow-list.
+
+### 2. Decisions
+
+- D1 (hook shape): `useForumMessages(channelId)` returns `{ status, data, error, retry }`. `status` is one of `'IDLE' | 'LOADING' | 'SUCCESS' | 'ERROR'`. `retry` increments a counter that is part of the effect dependency array. This follows Sec. 7 and the Sec. 3 error rules; the screenshot's bare `msgs` array cannot show loading or errors.
+- D2 (hook behavior): inside the effect, create a new `AbortController`; set `status` to `'LOADING'`; `fetch(url, { signal })`; throw if `!res.ok`; on `AbortError` return silently and never set an error; ignore any result when `controller.signal.aborted`; the cleanup calls `controller.abort()`; dependency array `[channelId, attempt]`. The URL is `${import.meta.env.VITE_API_URL}/api/channels/${encodeURIComponent(channelId)}/messages`.
+- D3 (server layout): `server/` is an ESM package (`"type": "module"`) with `express` and `cors` only. Files: `server/server.js`, `server/lib/validateMessage.js`, `server/lib/store.js`. Run with `node --env-file=.env --watch server.js` (no `dotenv`, no `nodemon`).
+- D4 (API contract, Sec. 8, unchanged): `GET /api/channels/:channelId/messages` returns 200 `[{ id, text, author, timestamp }]` or 404 `{ error }`; `POST` with body `{ text, author }` returns 201 with the created message, 400 `{ error }` for an invalid body, or 404 for an unknown channel. Channels: `nasa`, `esports-tribunal`, `notNasa`.
+- D5 (storage): in-memory `Map` seeded with 2 to 3 clearly fictional messages per channel. The server assigns `id` (`crypto.randomUUID()`) and `timestamp` (ISO 8601); the client never chooses them.
+- D6 (validation, the same limits as the defaults in Sec. 8): `validateMessage(body)` is pure. It accepts only a plain object, whitelists `text` and `author`, requires both to be strings, trims them, and enforces `text` 1 to 500 and `author` 1 to 50 characters after trim. Every other field is ignored. It returns `{ ok: true, value: { text, author } }` or `{ ok: false, error: '<clear message>' }`.
+- D7 (server hardening, Sec. 7 and 10): `express.json({ limit: '10kb' })`; every handler is `async` with `try/catch` and answers `{ error }`; one final error middleware turns a malformed JSON body into 400 `{ error }`; unexpected failures answer 500 `{ error }`.
+- D8 (server tests): the test runner for the server is Node's built-in `node --test` (no new dependency). Sec. 1 lists Vitest only for the client; adding it to `server/` needs your approval (Q2).
+- D9 (client UI, minimum): a `Forum` page at route `/forum/:channelId`, a `Forum` link in the nav (`to="/forum/nasa"`), a channel `nav aria-label="Channels"` of `NavLink`s for the three channels, and the messages as `<dl>` with `<Fragment key={msg.id}>`: `<dt>` author, `<dd>` text. The status area is a persistent `aria-live="polite"` container that is always mounted; it holds the loading text (`aria-busy="true"` while loading), the `role="alert"` error with a Retry `<button type="button">`, or the list. No client POST form (Q3).
+- D10 (env): the repo-root `.env.example` documents `PORT`, `CLIENT_ORIGIN`, `VITE_API_URL` with fake values. `server/.env` and `client/.env` stay git-ignored; you create them from the example.
+
+### 3. Task list
+
+#### 1.7.1-01: Contract and WBS
+- **Goal:** Freeze the scope above.
+- **Files touched:** `TASK_DECOMPOSITION.md`
+- **Commit:** `docs(spec): add WBS for exercise 1.7.1 data fetching and express hygiene`
+
+#### 1.7.1-02: Failing tests for `validateMessage` (test stage)
+- **Contract:** D6.
+- **Test cases (`node --test`):**
+  1. valid body returns `ok: true` with the trimmed `text` and `author`;
+  2. surrounding spaces are trimmed;
+  3. extra fields (`id`, `timestamp`, `isAdmin`, `__proto__`) are not in `value`;
+  4. `null`, an array, a string and `undefined` bodies are rejected;
+  5. missing `text` or missing `author` is rejected;
+  6. non-string `text` or `author` (number, object) is rejected;
+  7. empty or whitespace-only `text` or `author` is rejected;
+  8. `text` of 500 characters is accepted, 501 is rejected;
+  9. `author` of 50 characters is accepted, 51 is rejected;
+  10. the error message is a non-empty string.
+- **Files touched:** `server/package.json` (`"type": "module"`, `"scripts": { "test": "node --test", "dev": "node --env-file=.env --watch server.js" }`), `server/lib/validateMessage.test.js`
+- **Acceptance:** `npm test` in `server/` fails because the module is missing. Red is expected.
+- **Commit:** `test(server): add failing tests for validateMessage`
+
+#### 1.7.1-03: Express API with validation, CORS and in-memory store (logic)
+- **Contract:** D3, D4, D5, D6, D7. Middleware order: `cors(...)`, `express.json({ limit })`, routes, error middleware.
+- **Files touched:** `server/lib/validateMessage.js`, `server/lib/store.js`, `server/server.js`, `server/package.json` (add `express` and `cors` dependencies), `.env.example`
+- **Acceptance:**
+  - `npm test` in `server/` is green.
+  - `GET` on each channel returns 200 with the seeded messages; an unknown channel returns 404 `{ error }`.
+  - `POST` with a valid body returns 201 with a server-assigned `id` and `timestamp`; invalid bodies return 400 `{ error }`; a malformed JSON body returns 400 `{ error }`; an unknown channel returns 404.
+  - A `POST` containing `id` or `timestamp` ignores them.
+  - A response to a request from `http://localhost:5173` carries the CORS header; another origin does not.
+  - No `require()`, no hardcoded secrets, no `dotenv`.
+- **Verification:** `curl` against the running server for each case above; check the `Access-Control-Allow-Origin` header.
+- **Commit:** `feat(server): add express api with cors, validated posts and in-memory store`
+
+#### 1.7.1-04: `useForumMessages` hook (logic)
+- **Contract:** D1, D2.
+- **Files touched:** `client/src/hooks/useForumMessages.js`, `client/.env` is created locally by you and is not committed.
+- **Acceptance:**
+  - New `AbortController` per effect run; cleanup aborts; dependency array `[channelId, attempt]`.
+  - `res.ok` is checked; non-2xx sets `ERROR`.
+  - `AbortError` never sets an error and never updates state.
+  - Rapid channel switching: only the latest channel's result is shown; the Network panel shows earlier requests as `canceled`.
+  - Survives StrictMode double invocation (no duplicate state flashes, no console warnings).
+  - Base URL comes from `import.meta.env.VITE_API_URL`.
+- **Verification:** Slow 3G and fast channel switching in DevTools (after 1.7.1-06).
+- **Commit:** `feat(forum): add useForumMessages hook with abortable fetch`
+
+#### 1.7.1-05: Forum styles (CSS)
+- **Contract:** `Forum.module.css`: mobile-first, flex or grid with `gap`, channel list and messages stacked on 375px; reuse existing tokens; hex colors only in `:root`; no inline style.
+- **Files touched:** `client/src/pages/Forum.module.css`
+- **Acceptance:** Class names used by 1.7.1-06 exist; no horizontal scroll at 375px once wired.
+- **Commit:** `style(forum): add responsive forum layout`
+
+#### 1.7.1-06: Forum page, route and nav link (JSX)
+- **Contract:** D9.
+- **Files touched:** `client/src/pages/Forum.jsx`, `client/src/App.jsx`, `client/src/components/Layout.jsx`
+- **Acceptance:**
+  - `/forum/nasa`, `/forum/esports-tribunal` and `/forum/notNasa` show their seeded messages as a `dl` with `Fragment key={msg.id}`.
+  - An unknown channel (`/forum/xyz`) shows a `role="alert"` message with a Retry button; the page does not crash.
+  - Stopping the server shows the error state; restarting it and pressing Retry recovers.
+  - The live container exists before data arrives and is never unmounted; one `h1`, one `main`; heading order sequential.
+  - A message whose text is `<img src=x onerror=alert(1)>` (created with `curl`) stays plain text.
+  - No `key={index}`, no `dangerouslySetInnerHTML`, no inline style.
+- **Commit:** `feat(forum): add forum page with channel switching and error recovery`
+
+#### 1.7.1-07: Verification (no code)
+- **Steps:**
+  1. `npm test` in `server/` and `npx vitest run` in `client/` are green.
+  2. Fast channel switching on Slow 3G: earlier requests show `canceled`, no error is displayed for them, the final list matches the last chosen channel.
+  3. Stop the server: the error state shows; restart and Retry recovers.
+  4. CORS: the page loads data from `http://localhost:5173` to the server; `curl -H "Origin: https://example.org"` gets no CORS header.
+  5. Sec. 13 checkpoints: banned-pattern `git grep`, `http://` outside localhost, no tracked `.env`.
+  6. Console: zero warnings in StrictMode.
+- **Commit:** none.
+
+### 4. Commit plan summary
+
+| Order | Type | Task |
+|---|---|---|
+| 1 | docs(spec) | 1.7.1-01 |
+| 2 | test | 1.7.1-02 |
+| 3 | feat | 1.7.1-03 |
+| 4 | feat | 1.7.1-04 |
+| 5 | style | 1.7.1-05 |
+| 6 | feat | 1.7.1-06 |
+
+### 5. Open questions
+
+- **Q1 (hook shape):** The slide's hook returns `msgs` only. D1 returns the 4-state shape from Sec. 7 so the UI can show loading and errors. Sec. 7 allows another shape only when the screenshot specifies one; this is the one real conflict, so please confirm D1.
+- **Q2 (server test runner):** D8 uses `node --test` to avoid adding Vitest to `server/` (not in the allow-list). If you prefer Vitest in `server/`, tell me and I will use it instead.
+- **Q3 (client POST):** The slide mentions strict POST validation on the server but shows no client form. D9 adds none, so the Sec. 7 client/server parity applies later if a form is added. OK?
+- **Q4 (route and nav):** D9 uses `/forum/:channelId` with a nav link to `/forum/nasa`. OK?
