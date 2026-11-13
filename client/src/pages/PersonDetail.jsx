@@ -1,4 +1,5 @@
 import { Fragment } from 'react';
+import styles from './PersonDetail.module.css';
 
 const PERSON = {
   name: 'Ada Example',
@@ -11,7 +12,7 @@ const PERSON = {
 /** Page-level detail view of one fictional person. Default export so it can be lazy-loaded. */
 export default function PersonDetail() {
   return (
-    <article>
+    <article className={styles.detail}>
       <h2>{PERSON.name}</h2>
       <dl>
         {PERSON.details.map((item) => (
