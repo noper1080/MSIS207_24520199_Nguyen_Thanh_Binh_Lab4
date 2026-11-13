@@ -1,0 +1,27 @@
+.layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  list-style: none;
+}
+
+.link {
+  text-decoration: underline;
+}
+
+.active {
+  font-weight: 700;
+  text-decoration: underline overline;
+}
+
+@media (min-width: 48rem) {
+  .layout {
+    grid-template-columns: minmax(280px, 1fr) 2fr;
+  }
+}
