@@ -81,7 +81,7 @@ This exercise is UI-only, so the "fail test" stage is skipped (Sec. 11). Verifie
 #### 1.1-03: PersonDetail dimensions (CSS)
 - **Goal:** Define the final content's width/height as tokens so the skeleton can reuse them (R3).
 - **Contract:** Custom properties in `:root` of `client/src/index.css`: `--detail-height: 16rem`, `--detail-max-width: 40rem` (D4). Component rules live in a CSS Module and use `var(--token)`. Hex colors only inside `:root`.
-- **Files touched:** `client/src/index.css`, `client/src/pages/PersonDetail.module.css`
+- **Files touched:** `client/src/index.css`, `client/src/pages/PersonDetail.module.css`. Applying the class needs a one-line change in `client/src/pages/PersonDetail.jsx` (import `styles`, `className={styles.detail}`), committed separately as `feat(person-detail): apply dimension styles to PersonDetail` right after this task.
 - **Acceptance:**
   - Fixed height/min-height at 375px and at the wide breakpoint.
   - Mobile-first, one column by default.
@@ -89,16 +89,17 @@ This exercise is UI-only, so the "fail test" stage is skipped (Sec. 11). Verifie
 - **Verification:** DevTools device toolbar at 375px; Computed tab shows the expected box size.
 - **Commit:** `style(person-detail): define content dimensions as design tokens`
 
-#### 1.1-04: Skeleton component (JSX)
-- **Goal:** Dimension-matched fallback that exposes loading state (R3, R4).
-- **Contract:** `Skeleton()` takes no props (D6) and returns one root `<div>` (pure layout wrapper, allowed by Sec. 3) with `aria-busy="true"`. No text children. Placed in `client/src/components/`.
+#### 1.1-04: Skeleton component with loading announcement (JSX)
+- **Goal:** Dimension-matched fallback that exposes loading state (R3, R4). This task absorbs the former 1.1-06.
+- **Contract:** `Skeleton()` takes no props (D6) and returns one root `<div>` (pure layout wrapper, allowed by Sec. 3) with `aria-busy="true"`. Placed in `client/src/components/`. It also renders, via `createPortal` (from `react-dom`), the text "Loading person details" into the persistent `#live-status` element created in P2 (D1, Q8). The portal unmounts with the skeleton, which clears the message. If the element is not found, render nothing extra. No state, no effect.
 - **Files touched:** `client/src/components/Skeleton.jsx`
 - **Acceptance:**
   - `aria-busy="true"` present on the root.
-  - No inline `style`.
-  - No `aria-live` on this element (D1).
-- **Verification:** React DevTools Components tab; Elements panel shows the attribute.
-- **Commit:** `feat(skeleton): add Skeleton fallback component with aria-busy`
+  - No inline `style`; no `aria-live` on the skeleton itself (D1).
+  - The message appears in `#live-status` only while the skeleton is shown; the live region is never unmounted.
+  - No `useEffect`; no console warnings under StrictMode.
+- **Verification:** Slow 3G; Elements panel shows the attribute and the text appearing/disappearing inside `#live-status`.
+- **Commit:** `feat(skeleton): add Skeleton fallback with aria-busy and live announcement`
 
 #### 1.1-05: Skeleton styling (CSS)
 - **Goal:** Same box as `PersonDetail`, with a pure-CSS shimmer.
@@ -107,20 +108,9 @@ This exercise is UI-only, so the "fail test" stage is skipped (Sec. 11). Verifie
 - **Acceptance:**
   - Skeleton box size equals the final content box size at 375px and at the wide breakpoint.
   - Shimmer stops with reduced motion on.
-  - Text-vs-background contrast is not relevant (no text), but the shimmer is not the only loading signal (a11y text comes from Task 1.1-06).
+  - Text-vs-background contrast is not relevant (no text), but the shimmer is not the only loading signal (a11y text comes from Task 1.1-04).
 - **Verification:** DevTools: Rendering tab -> emulate `prefers-reduced-motion`; compare box sizes in Computed.
 - **Commit:** `style(skeleton): match PersonDetail dimensions and add reduced-motion shimmer`
-
-#### 1.1-06: Announce loading through the persistent live region (R4)
-- **Goal:** The live region created in P2 (id `live-status`) receives a short loading message while the skeleton is shown (D1).
-- **Contract:** `Skeleton` renders, via `createPortal` (import from `react-dom`), the text "Loading person details" into the `#live-status` element. The portal unmounts with the skeleton, which clears the message. If the element is not found, render nothing extra. No state, no effect.
-- **Files touched:** `client/src/components/Skeleton.jsx`
-- **Acceptance:**
-  - The live region exists in the DOM before the lazy chunk starts loading and is never unmounted.
-  - The message appears only while the skeleton is shown.
-  - No `useEffect`; no console warnings under StrictMode.
-- **Verification:** Slow 3G; Elements panel shows the text appear and disappear inside `#live-status`; Accessibility tree shows the status.
-- **Commit:** `feat(a11y): announce lazy route loading via persistent live region`
 
 #### 1.1-07: Lazy route and Suspense boundary (core feat)
 - **Goal:** Route-level chunking (R1) and Suspense with skeleton fallback (R2).
@@ -159,9 +149,9 @@ This exercise is UI-only, so the "fail test" stage is skipped (Sec. 11). Verifie
 | 4 | feat | P3 |
 | 5 | feat | 1.1-02 |
 | 6 | style | 1.1-03 |
-| 7 | feat | 1.1-04 |
-| 8 | style | 1.1-05 |
-| 9 | feat | 1.1-06 |
+| 7 | feat | 1.1-03 follow-up (apply class in `PersonDetail.jsx`) |
+| 8 | feat | 1.1-04 (includes the former 1.1-06) |
+| 9 | style | 1.1-05 |
 | 10 | feat | 1.1-07 |
 
 No JSX, CSS, and logic are mixed within one commit. The Sprint 1 target (2 feat commits) is not enforced for this exercise; P2/P3 are only the minimum scaffold.
