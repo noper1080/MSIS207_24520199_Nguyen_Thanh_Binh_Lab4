@@ -1,0 +1,1691 @@
+
+[Image #1]
+
+> Đọc file project rule. Sau đó phân tích EX 1.1 rồi thiết kế WBS vào
+  TASK_DECOMPOSITION.
+
+  Searched for 2 patterns, read 2 files (ctrl+o to expand)
+
+● Write(d:\Đại học\Phát triển ứng dụng web
+       MSIS207\thuc_hanh\Lab4\TASK_DECOMPOSITION.md)
+  ⎿  Wrote 155 lines to d:\Đại học\Phát triển ứng dụng web
+     MSIS207\thuc_hanh\Lab4\TASK_DECOMPOSITION.md
+       1 # TASK_DECOMPOSITION.md
+       2
+       3 ## Exercise 1.1: Performance and Resiliency Architectural Upgrad
+         es
+       4
+       5 Source: screenshot of Exercise 1.1 only. No implementation code
+         in this section.
+       6
+       7 ### 1. Requirements extracted from the screenshot
+       8
+     … +147 lines (ctrl+o to expand)
+
+● Tôi đã đọc project-rules.md và viết WBS cho Ex 1.1 vào TASK_DECOMPOSITION.md.
+  Chưa có code triển khai, và tôi chưa chạy hay kiểm tra gì.
+
+  Phân tích Ex 1.1 — screenshot có 4 yêu cầu:
+  - R1: dùng lazy(() => import('./PersonDetail')) để tách chunk theo route.
+  - R2: bọc route trong <Suspense fallback=...>.
+  - R3: skeleton cùng kích thước với nội dung thật để CLS = 0.
+  - R4: skeleton có aria-busy="true" và aria-live="polite".
+
+  Hai chỗ screenshot lệch với rule:
+  - Screenshot viết React.lazy, nhưng rule cấm import * as React, nên tôi dùng
+    import { lazy, Suspense } from 'react'.
+  - Screenshot đặt aria-live ngay trên Skeleton, còn mục 3 của rule yêu cầu live
+    region phải có sẵn từ trước. Tôi đề xuất để aria-busy trên Skeleton và thêm
+    một live region cố định trong layout. Đây là câu hỏi Q1, cần bạn xác nhận.
+
+  WBS gồm các task sau:
+
+  ┌────────┬──────────────────────────────────────────────────┬─────────────┐
+  │  Task  │                     Nội dung                     │   Commit    │
+  ├────────┼──────────────────────────────────────────────────┼─────────────┤
+  │ 1.1-00 │ Kiểm tra client/ và router đã có chưa            │ không       │
+  │        │                                                  │ commit      │
+  ├────────┼──────────────────────────────────────────────────┼─────────────┤
+  │ 1.1-01 │ Chốt contract và WBS                             │ docs(spec)  │
+  ├────────┼──────────────────────────────────────────────────┼─────────────┤
+  │ 1.1-02 │ PersonDetail.jsx có default export               │ feat        │
+  ├────────┼──────────────────────────────────────────────────┼─────────────┤
+  │ 1.1-03 │ Token kích thước nội dung                        │ style       │
+  ├────────┼──────────────────────────────────────────────────┼─────────────┤
+  │ 1.1-04 │ Component Skeleton có aria-busy                  │ feat        │
+  ├────────┼──────────────────────────────────────────────────┼─────────────┤
+  │ 1.1-05 │ CSS skeleton cùng kích thước, shimmer,           │ style       │
+  │        │ prefers-reduced-motion                           │             │
+  ├────────┼──────────────────────────────────────────────────┼─────────────┤
+  │ 1.1-06 │ Live region cố định trong layout                 │ feat        │
+  ├────────┼──────────────────────────────────────────────────┼─────────────┤
+  │ 1.1-07 │ Route lazy bọc trong Suspense                    │ feat        │
+  ├────────┼──────────────────────────────────────────────────┼─────────────┤
+  │ 1.1-08 │ Kiểm tra CLS = 0, a11y, Slow 3G, các git grep    │ không       │
+  │        │ checkpoint                                       │ commit      │
+  └────────┴──────────────────────────────────────────────────┴─────────────┘
+
+  Bài này chỉ có giao diện nên bỏ bước viết test, đúng theo rule. JSX, CSS và
+  logic không bị trộn trong cùng một commit.
+
+  Câu hỏi cần bạn trả lời trước khi viết code:
+  - Q1: Làm theo rule (live region cố định) hay làm đúng nguyên văn screenshot?
+  - Q2: client/ và router layout của Sprint 1 đã có chưa? Đường dẫn file layout
+    và file chứa Routes là gì?
+  - Q3: PersonDetail hiển thị những field nào, lấy :id từ URL hay dùng một người
+    cố định?
+  - Q4: Kích thước cụ thể của nội dung và skeleton là bao nhiêu?
+  - Q5: Chỉ bọc Suspense quanh route PersonDetail, hay bọc cả khối Routes?
+  - Q6: Skeleton có được nhận prop className không?
+
+  Thư mục hiện chỉ có project-rules.md, TASK_DECOMPOSITION.md (trống trước đó)
+  và một thư mục git. Chưa có client/, nên Q2 là điều kiện chặn.
+
+> root repo là thư mục git đó chúng ta sẽ làm việc ở đó. tiện thể bạn chuyển 2
+  file md vào trong đó luôn giúp tôi. các quyết định còn lại bạn bạn đưa ra
+  hướng xử lý nếu là bạn rồi chốt xong mới làm (các quyết định sau bạn cũng đưa
+  ra hướng giải quyết của bạn luôn).
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Update(TASK_DECOMPOSITION.md)
+  ⎿  Added 7 lines, removed 4 lines
+      15  
+      16  Out of scope (not in the screenshot): list page, router layout,
+           data fetching, theming, animations beyond a basic shimmer requ
+          ired by Sec. 9.
+      17  
+      18 -### 2. Assumptions (to be confirmed in Open questions)         
+      18 +### 2. Decisions (resolved from the former open questions)     
+      19  
+      20 -- A1: The `client/` app and a route that renders `PersonDetail`
+         - already exist (Sprint 1 router layout). If not, Task 1.1-00 bl
+         -ocks the rest.                                                 
+      21 -- A2: `PersonDetail` is a page-level component with fixed, know
+         -n dimensions at each breakpoint, using small fictional hardcode
+         -d data.                                                        
+      22 -- A3: Only the `PersonDetail` route is lazy. Other routes stay 
+         -eager.                                                         
+      20 +- D1 (Q1): Follow Sec. 3. `Skeleton` carries `aria-busy="true"`
+         +; a persistent `aria-live="polite"` region lives in the layout 
+         +and is never unmounted. The screenshot's `aria-live` on `<Skele
+         +ton>` is intentionally not copied.                             
+      21 +- D2 (Q2): Repo root is `MSIS207_24520199_Nguyen_Thanh_Binh_Lab
+         +4/`. `client/` does not exist yet, so a minimal scaffold (P1-P3
+         +) runs first. Paths: `client/src/main.jsx`, `client/src/App.jsx
+         +`, `client/src/components/Layout.jsx`. The scaffold is the bare
+         + minimum for the exercise, not the full Sprint 1 router layout.
+      22 +- D3 (Q3): `PersonDetail` shows one fixed fictional person (nam
+         +e, role, email, as a `dl`). No `:id` param, no lookup (that bel
+         +ongs to later exercises). Route path: `/person`.               
+      23 +- D4 (Q4): The detail block has a fixed height token `--detail-
+         +height: 16rem` and `max-width: 40rem`, width 100%, at every bre
+         +akpoint. Skeleton uses the same tokens. Fixed values keep CLS =
+         + 0 without measurement.                                        
+      24 +- D5 (Q5): One `Suspense` boundary around the `PersonDetail` ro
+         +ute element only. Other routes stay eager.                     
+      25 +- D6 (Q6): `Skeleton` takes no props. Its size comes only from 
+         +CSS tokens.                                                    
+      26  
+      27  ### 3. Task list (order matters)
+      28  
+
+● Update(TASK_DECOMPOSITION.md)
+  ⎿  Added 24 lines, removed 7 lines
+      31  
+      32  ---
+      33  
+      34 -#### 1.1-00: Prerequisite check (no commit)                    
+      35 -- **Goal:** Confirm `client/` exists, the router is set up with
+         - `Routes`, and a `PersonDetail` route exists.                  
+      36 -- **Contract:** None.                                          
+      37 -- **Files touched:** none (read only).                         
+      38 -- **Acceptance:** Developer confirms A1. Otherwise stop and ans
+         -wer Q2.                                                        
+      39 -- **Verification:** `npm run dev` in `client/` shows the route.
+      40 -- **Commit:** none.                                            
+      34 +#### P1: Client scaffold                                       
+      35 +- **Goal:** Vite + React 19 app with only allowed dependencies 
+         +(D2).                                                          
+      36 +- **Contract:** `client/` with `react`, `react-dom`, `react-rou
+         +ter` v7, `vite`, `@vitejs/plugin-react` (Vite's React plugin is
+         + required by Vite; confirm it is acceptable, see Q7). `main.jsx
+         +` uses `createRoot` inside `<StrictMode>` and wraps `<App />` i
+         +n `<BrowserRouter>`.                                           
+      37 +- **Files touched:** `client/package.json`, `client/index.html`
+         +, `client/vite.config.js`, `client/src/main.jsx`, `client/src/i
+         +ndex.css` (reset and empty `:root`), root `.gitignore`.        
+      38 +- **Acceptance:** `npm run dev` serves a blank app; `.env` and 
+         +`node_modules` ignored.                                        
+      39 +- **Verification:** Browser loads with zero console warnings.  
+      40 +- **Commit:** `chore(client): scaffold vite react app`         
+      41  
+      42 +#### P2: Layout with persistent live region                    
+      43 +- **Goal:** Shared layout (`header`, `nav aria-label`, one `<ma
+         +in>` with `<Outlet />`, one `<h1>`) plus the live region of D1.
+      44 +- **Contract:** `Layout()` returns one root; the live region is
+         + a sibling of `<main>` inside that root and is always mounted. 
+      45 +- **Files touched:** `client/src/components/Layout.jsx`, `clien
+         +t/src/components/Layout.module.css`                            
+      46 +- **Acceptance:** One `<h1>`, one `<main>`; `NavLink` uses a ca
+         +llback `className` and `end` where needed.                     
+      47 +- **Verification:** Accessibility tree; 375px, no horizontal sc
+         +roll.                                                          
+      48 +- **Commit:** `feat(router): add shared layout with outlet and 
+         +live region`                                                   
+      49 +                                                               
+      50 +#### P3: Routes                                                
+      51 +- **Goal:** `App` with `Routes` and a layout parent route; one 
+         +home route and the `/person` route (wired in 1.1-07).          
+      52 +- **Files touched:** `client/src/App.jsx`                      
+      53 +- **Acceptance:** No `createBrowserRouter`, no v5 syntax.      
+      54 +- **Verification:** Navigate between routes by keyboard.       
+      55 +- **Commit:** `feat(router): add routes under shared layout`   
+      56 +                                                               
+      57 +> P1 to P3 stand in for Sprint 1 only as far as this exercise n
+         +eeds; they do not add detail lookup or 404 handling.           
+      58 +                                                               
+      59  #### 1.1-01: Contract and WBS
+      60  - **Goal:** Freeze the contract for lazy loading and the skelet
+          on.
+      61  - **Contract (JSDoc to be added in later tasks):**
+
+● Update(TASK_DECOMPOSITION.md)
+  ⎿  Added 1 line, removed 1 line
+      69  
+      70  #### 1.1-02: PersonDetail page as default export (JSX)
+      71  - **Goal:** Provide the lazy target with a **default export** a
+          nd a stable, measurable structure.
+      72 -- **Contract:** `export default function PersonDetail()`; seman
+         -tic markup (`article`, `h2`, `dl`); no `<h1>` here (layout owns
+         - it, Sec. 3).                                                  
+      72 +- **Contract:** `export default function PersonDetail()`; one f
+         +ixed fictional person (name, role, email) in `article` + `h2` +
+         + `dl` with `<Fragment key>` pairs; no `<h1>` here (layout owns 
+         +it, Sec. 3).                                                   
+      73  - **Files touched:** `client/src/pages/PersonDetail.jsx` (creat
+          e or edit if it exists)
+      74  - **Acceptance:**
+      75    - Default export present.
+
+● Update(TASK_DECOMPOSITION.md)
+  ⎿  Removed 2 lines
+      78  - **Verification:** Open the route; heading order is sequential
+           in the Accessibility tree.
+      79  - **Commit:** `feat(person-detail): add default-exported Person
+          Detail page`
+      80  
+      81 -> Counts toward the Sprint 1 "detail route handling" feat commi
+         -t only if the sprint plan agrees (see Q2). Otherwise change the
+         - type to `chore`.                                              
+      82 -                                                               
+      81  #### 1.1-03: PersonDetail dimensions (CSS)
+      82  - **Goal:** Define the final content's width/height as tokens s
+          o the skeleton can reuse them (R3).
+      83  - **Contract:** Custom properties in `:root` of `client/src/ind
+          ex.css` (e.g. detail-block width/height/min-height per breakpoi
+          nt). Component rules live in a CSS Module and use `var(--token)
+          `. Hex colors only inside `:root`.
+
+● Update(TASK_DECOMPOSITION.md)
+  ⎿  Added 1 line, removed 1 line
+      80  
+      81  #### 1.1-03: PersonDetail dimensions (CSS)
+      82  - **Goal:** Define the final content's width/height as tokens s
+          o the skeleton can reuse them (R3).
+      83 -- **Contract:** Custom properties in `:root` of `client/src/ind
+         -ex.css` (e.g. detail-block width/height/min-height per breakpoi
+         -nt). Component rules live in a CSS Module and use `var(--token)
+         -`. Hex colors only inside `:root`.                             
+      83 +- **Contract:** Custom properties in `:root` of `client/src/ind
+         +ex.css`: `--detail-height: 16rem`, `--detail-max-width: 40rem` 
+         +(D4). Component rules live in a CSS Module and use `var(--token
+         +)`. Hex colors only inside `:root`.                            
+      84  - **Files touched:** `client/src/index.css`, `client/src/pages/
+          PersonDetail.module.css`
+      85  - **Acceptance:**
+      86    - Fixed height/min-height at 375px and at the wide breakpoint
+          .
+
+● Update(TASK_DECOMPOSITION.md)
+  ⎿  Added 1 line, removed 1 line
+      91  
+      92  #### 1.1-04: Skeleton component (JSX)
+      93  - **Goal:** Dimension-matched fallback that exposes loading sta
+          te (R3, R4).
+      94 -- **Contract:** `Skeleton({ className })` returns one root `<di
+         -v>` (pure layout wrapper, allowed by Sec. 3) with `aria-busy="t
+         -rue"`. No text children. Placed in `client/src/components/`.   
+      94 +- **Contract:** `Skeleton()` takes no props (D6) and returns on
+         +e root `<div>` (pure layout wrapper, allowed by Sec. 3) with `a
+         +ria-busy="true"`. No text children. Placed in `client/src/compo
+         +nents/`.                                                       
+      95  - **Files touched:** `client/src/components/Skeleton.jsx`
+      96  - **Acceptance:**
+      97    - `aria-busy="true"` present on the root.
+
+● Update(TASK_DECOMPOSITION.md)
+  ⎿  Added 1 line, removed 1 line
+       96  - **Acceptance:**
+       97    - `aria-busy="true"` present on the root.
+       98    - No inline `style`.
+       99 -  - No `aria-live` on this element until Q1 is answered.      
+       99 +  - No `aria-live` on this element (D1).                      
+      100  - **Verification:** React DevTools Components tab; Elements pa
+           nel shows the attribute.
+      101  - **Commit:** `feat(skeleton): add Skeleton fallback component
+            with aria-busy`
+      102  
+
+● Now update the 1.1-06, 1.1-07 entries, commit table, and open questions.
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(TASK_DECOMPOSITION.md)
+  ⎿  Added 9 lines, removed 9 lines
+      111  - **Verification:** DevTools: Rendering tab -> emulate `prefer
+           s-reduced-motion`; compare box sizes in Computed.
+      112  - **Commit:** `style(skeleton): match PersonDetail dimensions 
+           and add reduced-motion shimmer`
+      113  
+      114 -#### 1.1-06: Persistent live region for loading announcements 
+          -(R4)                                                          
+      115 -- **Goal:** Announce the loading state reliably (Sec. 3: the l
+          -ive region must stay mounted).                                
+      116 -- **Contract:** One persistent `<div aria-live="polite">` (or 
+          -`<output>`) in the layout, outside `<Suspense>`. Its text cont
+          -ent is changed to a short status while loading; it never unmou
+          -nts. Exact mechanism is pending Q1.                           
+      117 -- **Files touched:** the layout file from Sprint 1 (path from 
+          -Q2, e.g. `client/src/components/Layout.jsx`), plus `Skeleton.j
+          -sx` only if Q1 says so.                                       
+      114 +#### 1.1-06: Announce loading through the persistent live regi
+          +on (R4)                                                       
+      115 +- **Goal:** The live region created in P2 (id `live-status`) r
+          +eceives a short loading message while the skeleton is shown (D
+          +1).                                                           
+      116 +- **Contract:** `Skeleton` renders, via `createPortal` (import
+          + from `react-dom`), the text "Loading person details" into the
+          + `#live-status` element. The portal unmounts with the skeleton
+          +, which clears the message. If the element is not found, rende
+          +r nothing extra. No state, no effect.                         
+      117 +- **Files touched:** `client/src/components/Skeleton.jsx`     
+      118  - **Acceptance:**
+      119 -  - The live region exists in the DOM before the lazy chunk st
+          -arts loading.                                                 
+      120 -  - No `useEffect` is used to derive state; no console warning
+          -s.                                                            
+      121 -  - Zero extra state libraries.                               
+      122 -- **Verification:** Slow 3G; screen reader or Accessibility tr
+          -ee shows the status update; Elements panel shows the container
+          - never unmounts.                                              
+      123 -- **Commit:** `feat(a11y): add persistent aria-live region for
+          - lazy route loading`                                          
+      119 +  - The live region exists in the DOM before the lazy chunk st
+          +arts loading and is never unmounted.                          
+      120 +  - The message appears only while the skeleton is shown.     
+      121 +  - No `useEffect`; no console warnings under StrictMode.     
+      122 +- **Verification:** Slow 3G; Elements panel shows the text app
+          +ear and disappear inside `#live-status`; Accessibility tree sh
+          +ows the status.                                               
+      123 +- **Commit:** `feat(a11y): announce lazy route loading via per
+          +sistent live region`                                          
+      124  
+      125  #### 1.1-07: Lazy route and Suspense boundary (core feat)
+      126  - **Goal:** Route-level chunking (R1) and Suspense with skelet
+           on fallback (R2).
+
+● Update(TASK_DECOMPOSITION.md)
+  ⎿  Added 2 lines, removed 2 lines
+      129    - `const PersonDetail = lazy(() => import('./pages/PersonDet
+           ail'))` at module top level (outside any component).
+      130    - `<Route path=... element={<Suspense fallback={<Skeleton />
+           }><PersonDetail /></Suspense>} />` inside the existing `Routes
+           `.
+      131    - No `createBrowserRouter`; no `React.lazy`.
+      132 -- **Files touched:** `client/src/App.jsx` (or the file that ow
+          -ns `Routes`, per Q2)                                          
+      132 +- **Files touched:** `client/src/App.jsx`                     
+      133  - **Acceptance:**
+      134    - Network tab shows a separate JS chunk requested only when 
+           the route is opened.
+      135    - Skeleton appears first, then `PersonDetail`.
+      136 -  - Other routes are not lazy (A3).                           
+      136 +  - Other routes are not lazy (D5).                           
+      137  - **Verification:** DevTools Network (throttle Slow 3G, disabl
+           e cache), then check `vite build` output lists a separate chun
+           k.
+      138  - **Commit:** `feat(router): lazy-load PersonDetail route behi
+           nd Suspense skeleton`
+      139  
+
+● Update(TASK_DECOMPOSITION.md)
+  ⎿  Added 10 lines, removed 7 lines
+      154  | Order | Type | Task |
+      155  |---|---|---|
+      156  | 1 | docs(spec) | 1.1-01 |
+      157 -| 2 | feat | 1.1-02 |                                         
+      158 -| 3 | style | 1.1-03 |                                        
+      159 -| 4 | feat | 1.1-04 |                                         
+      160 -| 5 | style | 1.1-05 |                                        
+      161 -| 6 | feat | 1.1-06 |                                         
+      162 -| 7 | feat | 1.1-07 |                                         
+      157 +| 2 | chore | P1 |                                            
+      158 +| 3 | feat | P2 |                                             
+      159 +| 4 | feat | P3 |                                             
+      160 +| 5 | feat | 1.1-02 |                                         
+      161 +| 6 | style | 1.1-03 |                                        
+      162 +| 7 | feat | 1.1-04 |                                         
+      163 +| 8 | style | 1.1-05 |                                        
+      164 +| 9 | feat | 1.1-06 |                                         
+      165 +| 10 | feat | 1.1-07 |                                        
+      166  
+      164 -No JSX, CSS, and logic are mixed within one commit. Feat commi
+          -ts count against Sprint 1 targets only as decided in Q2.      
+      167 +No JSX, CSS, and logic are mixed within one commit. The Sprint
+          + 1 target (2 feat commits) is not enforced for this exercise; 
+          +P2/P3 are only the minimum scaffold.                          
+      168  
+      169  ### 5. Open questions
+      170  
+
+● Update(TASK_DECOMPOSITION.md)
+  ⎿  Added 4 lines, removed 6 lines
+      168  
+      169  ### 5. Open questions
+      170  
+      171 -- **Q1 (conflict with Sec. 3):** The screenshot puts `aria-liv
+          -e="polite"` directly on `<Skeleton>`. Sec. 3 says a live regio
+          -n mounted together with its content is not reliably announced 
+          -and requires a persistent container. Which do we follow? Propo
+          -sed: keep `aria-busy="true"` on the Skeleton and add a persist
+          -ent live region in the layout (Task 1.1-06). Please confirm, o
+          -r tell me to follow the screenshot literally.                 
+      172 -- **Q2 (existing work):** Does `client/` with the Sprint 1 rou
+          -ter layout already exist? If yes, what are the exact file path
+          -s for the layout and the `Routes` definition? If no, should th
+          -e scaffold be a separate prerequisite WBS (Sprint 1) before 1.
+          -1?                                                            
+      173 -- **Q3 (PersonDetail content):** The screenshot shows no field
+          -s for a person. What should `PersonDetail` display (fields, an
+          -d does it read an `:id` from the URL or use one fixed fictiona
+          -l person)? This sets the final content size used by the skelet
+          -on.                                                           
+      174 -- **Q4 (skeleton dimensions):** Which exact width/height shoul
+          -d the final content and skeleton use (fixed values, or `min-he
+          -ight` plus an aspect ratio)? The screenshot says only "dimensi
+          -on-matched".                                                  
+      175 -- **Q5 (Suspense scope):** The screenshot says "Wrapping route
+          -s in Suspense". Is one boundary around only the `PersonDetail`
+          - route enough (A3), or should one boundary wrap the whole `Rou
+          -tes` block?                                                   
+      176 -- **Q6 (Skeleton props):** The snippet shows `<Skeleton aria-b
+          -usy aria-live />` with no other props. Is a `className` prop a
+          -cceptable, or should the component take no props at all?      
+      171 +Q1-Q6 are resolved in section 2 (D1-D6). Remaining:           
+      172 +                                                              
+      173 +- **Q7 (dependency allow-list):** Vite needs `@vitejs/plugin-r
+          +eact` to compile JSX, and it is not in the allow-list of Sec. 
+          +1. Proposed: treat it as part of `vite` and allow it. Confirm 
+          +before P1.                                                    
+      174 +- **Q8 (`createPortal` in `Skeleton`):** Portaling text into `
+          +#live-status` during render is the simplest way to announce wi
+          +thout state or effects. If you prefer, the fallback could inst
+          +ead contain visually hidden text with `role="status"` (simpler
+          +, but then the live region is not persistent, which Sec. 3 dis
+          +courages). Default: portal.                                   
+
+● Tôi đã chuyển project-rules.md và TASK_DECOMPOSITION.md vào thư mục repo
+  MSIS207_24520199_Nguyen_Thanh_Binh_Lab4/, và cập nhật WBS theo các quyết định
+  dưới đây. Chưa có code nào được viết.
+
+  Các quyết định tôi chốt:
+
+  ┌─────┬────────────────────────────────────────────────────────────────────┐
+  │  #  │                             Quyết định                             │
+  ├─────┼────────────────────────────────────────────────────────────────────┤
+  │     │ Theo rule mục 3. Skeleton chỉ có aria-busy="true". Một live region │
+  │ Q1  │  aria-live="polite" (id live-status) nằm cố định trong Layout và   │
+  │     │ không bao giờ unmount. Tôi không chép aria-live trên Skeleton như  │
+  │     │ screenshot.                                                        │
+  ├─────┼────────────────────────────────────────────────────────────────────┤
+  │     │ client/ chưa có, nên thêm 3 task nền tối thiểu: P1 (scaffold       │
+  │ Q2  │ Vite), P2 (Layout), P3 (Routes). Các task này không làm lookup chi │
+  │     │  tiết hay trang 404.                                               │
+  ├─────┼────────────────────────────────────────────────────────────────────┤
+  │ Q3  │ PersonDetail hiển thị một người hư cấu cố định (tên, vai trò,      │
+  │     │ email) trong dl. Không dùng :id, route là /person.                 │
+  ├─────┼────────────────────────────────────────────────────────────────────┤
+  │     │ Kích thước cố định bằng token: --detail-height: 16rem và           │
+  │ Q4  │ --detail-max-width: 40rem. Skeleton dùng cùng token nên CLS = 0 mà │
+  │     │  không cần đo.                                                     │
+  ├─────┼────────────────────────────────────────────────────────────────────┤
+  │ Q5  │ Chỉ một Suspense quanh route PersonDetail.                         │
+  ├─────┼────────────────────────────────────────────────────────────────────┤
+  │ Q6  │ Skeleton không nhận prop nào, kích thước lấy hoàn toàn từ CSS.     │
+  └─────┴────────────────────────────────────────────────────────────────────┘
+
+  Task 1.1-06 cũng đổi cách làm. Vì live region đã có sẵn từ P2, Skeleton dùng
+  createPortal đẩy dòng chữ "Loading person details" vào #live-status. Dòng chữ
+  tự mất khi skeleton biến mất. Cách này không cần state hay useEffect.
+
+  Còn 2 điểm cần bạn xác nhận trước khi làm P1:
+  - Q7: Vite cần @vitejs/plugin-react để biên dịch JSX, nhưng gói này không có
+    trong allow-list. Tôi đề xuất coi nó là một phần của vite và cho phép.
+  - Q8: Nếu bạn không muốn dùng createPortal, phương án thay thế là chữ ẩn với
+    role="status". Nhưng khi đó live region không còn cố định, mà rule mục 3
+    không khuyến khích. Mặc định tôi giữ createPortal.
+
+  Nếu bạn đồng ý cả hai, hãy bảo tôi bắt đầu, tôi sẽ làm lần lượt từng task theo
+  thứ tự commit trong WBS.
+
+> làm theo ý bạn đi.
+
+  Ran 1 shell command, no result recorded for 1 other call (ctrl+o to expand)
+  ⎿  $ cd "d:/Đại học/Phát triển ứng dụng web MSIS207/thuc_hanh/Lab4/MSIS207_24520199_Nguyen_Thanh_Binh_Lab4" && git add project-rules.md TASK_DECOMPOSITION.md && git commit -q -m "docs(spec): add WBS for exercise 1.1 lazy loading and suspense skeleton
+     Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropi…
+  ⎿  Interrupted · What should Claude do instead?
+  ⎿  Interrupted · What should Claude do instead?
+
+> commit tôi sẽ tự thêm co author sau nha. bạn tiếp tục làm đi
+
+  Ran 2 shell commands, wrote 2 memories (ctrl+o to expand)
+● Task P1 (client scaffold) xong. vite build chạy thành công, nhưng tôi chưa mở
+  npm run dev trên trình duyệt, nên mục "zero console warnings" trong tiêu chí
+  của P1 chưa kiểm tra.
+
+  Tôi không commit và không thêm co-author, để bạn tự xem git diff rồi commit.
+  Tôi đã lưu việc này vào memory.
+
+  File đã tạo:
+  - .gitignore: ignore node_modules, dist, .env.
+  - client/package.json: cài react@19, react-dom@19, react-router@7. Dev: vite,
+    vitest, @vitejs/plugin-react (Q7 đã chốt cho phép).
+  - client/vite.config.js và client/index.html.
+  - client/src/main.jsx: createRoot trong <StrictMode>, <App /> bọc trong
+    <BrowserRouter>.
+  - client/src/index.css: reset và :root còn trống.
+  - client/src/App.jsx: chỉ là placeholder return null để build được. P3 sẽ thay
+    nội dung.
+
+  Điều tôi chưa chắc: client/node_modules và package-lock.json nằm trong thư mục
+  client. .gitignore đã bỏ qua node_modules, còn package-lock.json nên được
+  commit.
+
+  Commit đề xuất: chore(client): scaffold vite react app
+
+  Khi bạn commit xong, tôi làm tiếp P2 (Layout và live region).
+
+> commit đầu tiên là docs chốt WBS á xong mới commit task đầu tiên. Bạn viết
+  sẵn lệnh commit cho tôi luôn nha
+
+● Chạy lần lượt trong thư mục repo MSIS207_24520199_Nguyen_Thanh_Binh_Lab4:
+
+  # Commit 1: chốt WBS (docs trước code)
+  git add project-rules.md TASK_DECOMPOSITION.md
+  git commit -m "docs(spec): add WBS for exercise 1.1 lazy loading and suspense
+  skeleton"
+
+  # Commit 2: task P1
+  git add .gitignore client/package.json client/package-lock.json
+  client/index.html client/vite.config.js client/src
+  git commit -m "chore(client): scaffold vite react app"
+
+  Tôi chủ ý liệt kê từng file ở commit 2 thay vì dùng git add ., để node_modules
+  không bị thêm nhầm. Chạy git status trước khi commit để kiểm tra lại.
+
+  Muốn thêm co-author thì thêm dòng -m "Co-Authored-By: ..." vào mỗi lệnh git
+  commit. Khi xong, bảo tôi làm P2.
+
+> P2 đi
+
+● Nội dung P2: Layout trả về Fragment gồm header (một h1 và nav có aria-label),
+  một main chứa <Outlet />, và live region #live-status luôn được mount. Tôi chỉ
+  sửa 2 file trong WBS, không đụng index.css, nên không dùng màu hex.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Task P2 xong, chưa commit. Tôi chưa kiểm chứng được Layout vì chưa có file nào
+  import nó. vite build vẫn pass nhưng không biên dịch file này. P3 sẽ nối vào
+  App và chạy được thật.
+
+  File đã tạo:
+  - Layout.jsx (client/src/components/Layout.jsx): trả về Fragment gồm header,
+    main và live region #live-status.
+    - header có một <h1> và nav aria-label="Main". NavLink dùng className dạng
+      callback; link Home có end.
+    - main chứa <Outlet />, đúng một <main> cho cả trang.
+    - #live-status có aria-live="polite", ẩn bằng CSS, luôn được mount và nằm
+      ngoài main.
+  - Layout.module.css (client/src/components/Layout.module.css): flex/gap,
+    mobile-first. Link đang active dùng chữ đậm kết hợp gạch trên và gạch dưới,
+    không dựa vào màu.
+
+  Những điều cần bạn biết:
+  - Link /person chưa có route nào cho đến P3.
+  - Chưa có style :focus-visible riêng, đang dùng viền focus mặc định của trình
+    duyệt. Nếu bạn muốn viền focus tùy chỉnh thì cần thêm token màu vào
+    index.css, tức là phải sửa WBS.
+  - Chưa kiểm tra 375px và bàn phím vì chưa có route để mở.
+
+  Commit đề xuất:
+  git add client/src/components/Layout.jsx
+  client/src/components/Layout.module.css
+  git commit -m "feat(router): add shared layout with outlet and live region"
+
+  Commit xong bảo tôi làm P3.
+
+> P3
+
+● Task P3: App dùng Routes với Layout làm route cha và một index route cho Home.
+  Route /person sẽ gắn ở task 1.1-07 như WBS ghi, nên P3 chưa thêm nó.
+
+● Write(client\src\App.jsx)
+  ⎿  Added 10 lines, removed 1 line
+       1 +import { Route, Routes } from 'react-router';                  
+       2 +import Layout from './components/Layout.jsx';                  
+       3 +                                                               
+       4  export default function App() {
+       2 -  return null;                                                 
+       5 +  return (                                                     
+       6 +    <Routes>                                                   
+       7 +      <Route element={<Layout />}>                             
+       8 +        <Route index element={<h2>Home</h2>} />                
+       9 +      </Route>                                                 
+      10 +    </Routes>                                                  
+      11 +  );                                                           
+      12  }
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Task P3 xong, chưa commit. Lần build này đã biên dịch cả Layout (CSS tăng lên
+  0.45 kB), nên P2 và P3 đều biên dịch được. Tôi chưa mở trình duyệt để kiểm tra
+  bàn phím.
+
+  Thay đổi: App.jsx (client/src/App.jsx) có Routes với Layout làm route cha và
+  một index route hiển thị <h2>Home</h2>. Heading này nằm dưới <h1> của layout
+  nên thứ tự heading hợp lệ.
+
+  Kiểm tra:
+  - git grep các pattern bị cấm (Switch, Redirect, activeClassName,
+    createBrowserRouter) không ra kết quả nào.
+  - git grep chỉ quét file đã được git theo dõi, nên các file mới chưa git add
+    có thể chưa bị quét. Chạy lại sau khi bạn git add.
+
+  Lưu ý: Link "Person" trên nav chưa dẫn tới route nào cho đến task 1.1-07, nên
+  bấm vào sẽ ra trang trống. Đây là đúng theo WBS.
+
+  Commit đề xuất:
+  git add client/src/App.jsx
+  git commit -m "feat(router): add routes under shared layout"
+
+  Commit xong bảo tôi làm 1.1-02 (PersonDetail.jsx).
+
+> làm 1.1-02
+
+● Task 1.1-02: PersonDetail là default export, dùng article + h2 + dl với
+  <Fragment key> cho từng cặp dt/dd, dữ liệu là một người hư cấu cố định. Không
+  có h1.
+
+● Write(client\src\pages\PersonDetail.jsx)
+  ⎿  Wrote 26 lines to client\src\pages\PersonDetail.jsx
+      1 import { Fragment } from 'react';
+      2
+      3 const PERSON = {
+      4   name: 'Ada Example',
+      5   details: [
+      6     { id: 'role', label: 'Role', value: 'Fictional engineer' },
+      7     { id: 'email', label: 'Email', value: 'ada@example.com' },
+      8   ],
+      9 };
+     … +17 lines (ctrl+o to expand)
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Task 1.1-02 xong, chưa commit. Tôi chưa render file này trong trình duyệt vì
+  chưa có route nào trỏ tới nó (1.1-07 sẽ gắn route), nên mới kiểm tra bằng
+  grep.
+
+  Thay đổi: PersonDetail.jsx (client/src/pages/PersonDetail.jsx)
+  - export default function PersonDetail() có default export, đủ điều kiện cho
+    lazy.
+  - Dữ liệu là một người hư cấu cố định, "Ada Example", với 2 dòng Role và
+    Email, là hằng số ở đầu file.
+  - Dùng article, h2 và dl với <Fragment key={item.id}>. Không có h1, không có
+    style, không có ảnh.
+
+  Kiểm tra: grep tìm style=, key={index} và dangerouslySetInnerHTML chỉ ra một
+  dòng khớp là key={item.id}. Đó là khớp nhầm của pattern, không phải lỗi.
+
+  Lưu ý: <h2> có thể chưa đủ "ngữ nghĩa" nếu sau này bạn muốn thêm ảnh hay
+  trường khác. Hiện tôi giữ đúng tối thiểu theo D3.
+
+  Commit đề xuất:
+  git add client/src/pages/PersonDetail.jsx
+  git commit -m "feat(person-detail): add default-exported PersonDetail page"
+
+  Commit xong bảo tôi làm 1.1-03 (token kích thước và CSS).
+
+> làm 1.1-03
+
+● Update(client\src\index.css)
+  ⎿  Added 3 lines
+       7  }
+       8  
+       9  :root {
+      10 +  --color-border: #767676;                                     
+      11 +  --detail-height: 16rem;                                      
+      12 +  --detail-max-width: 40rem;                                   
+      13  }
+
+● Write(client\src\pages\PersonDetail.module.css)
+  ⎿  Wrote 8 lines to client\src\pages\PersonDetail.module.css
+      1 .detail {
+      2   width: 100%;
+      3   max-width: var(--detail-max-width);
+      4   height: var(--detail-height);
+      5   padding: 1rem;
+      6   overflow: hidden;
+      7   border: 1px solid var(--color-border);
+      8 }
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Task 1.1-03 xong, chưa commit. Có một chỗ lệch so với WBS, giải thích ở dưới.
+
+  Thay đổi:
+  - index.css (client/src/index.css): thêm token vào :root: --detail-height:
+    16rem, --detail-max-width: 40rem và --color-border: #767676. Tôi thêm màu
+    viền vì cần nhìn thấy khung. #767676 trên nền trắng có độ tương phản khoảng
+    4.5:1, đạt mức tối thiểu 3:1 cho viền.
+  - PersonDetail.module.css (client/src/pages/PersonDetail.module.css) (mới):
+    .detail có width: 100%, max-width, height cố định và overflow: hidden.
+    box-sizing: border-box đã có trong reset nên padding và viền không làm khung
+    to thêm.
+  - PersonDetail.jsx (client/src/pages/PersonDetail.jsx): thêm import styles và
+    className={styles.detail} trên <article>.
+
+  Chỗ lệch so với WBS: WBS chỉ liệt kê 2 file CSS cho task này. Nhưng CSS Module
+  không có tác dụng nếu JSX không gắn class, nên tôi phải sửa thêm
+  PersonDetail.jsx. Để không trộn JSX với CSS trong một commit, hãy tách làm hai
+  commit theo đúng thứ tự dưới đây.
+
+  Chưa kiểm tra: vite build pass, nhưng kích thước khung ở 375px và trên màn
+  rộng chưa kiểm tra vì chưa có route. Sẽ kiểm tra ở 1.1-07.
+
+  Commit đề xuất:
+  git add client/src/index.css client/src/pages/PersonDetail.module.css
+  git commit -m "style(person-detail): define content dimensions as design
+  tokens"
+
+  git add client/src/pages/PersonDetail.jsx
+  git commit -m "feat(person-detail): apply dimension styles to PersonDetail"
+
+  Commit xong bảo tôi làm 1.1-04 (component Skeleton).
+
+> bạn có đang chia nhỏ task ra quá không nhỉ?
+
+● Có một phần là đúng, nhưng phần lớn là do rule bắt buộc.
+
+  Phần do rule: mục 11 và 12 yêu cầu mỗi commit chỉ một mối quan tâm, và "never
+  mix JSX/CSS/logic in one commit". Đó là lý do JSX và CSS bị tách ra thành
+  nhiều commit. Với một bài chấm theo chất lượng commit và theo dõi dùng AI, bài
+  này đang làm đúng yêu cầu.
+
+  Phần tôi chia thừa:
+  - Mỗi task một prompt: rule nói "one task per prompt". Nhưng các task nhỏ như
+    P1, P2, P3 hay 1.1-02 và 1.1-03 không cần dừng lại hỏi bạn sau từng cái. Ví
+    dụ 1.1-03 làm tôi phải sửa cả JSX và CSS, rồi lại tách thành hai commit.
+  - Task 1.1-06: nó chỉ thêm một dòng createPortal vào Skeleton.jsx, mà file đó
+    vừa tạo ở 1.1-04. Có thể gộp vào 1.1-04.
+  - Task 1.1-08: chỉ là bước kiểm tra, không có code.
+
+  Đề xuất:
+  1. Gộp 1.1-06 vào 1.1-04, bỏ một commit.
+  2. Làm 1.1-04, 1.1-05 và 1.1-07 liền một lượt (Skeleton, CSS skeleton, route
+     lazy), vẫn giữ commit riêng cho từng task nhưng bạn xem diff một lần.
+  3. Tôi dừng lại ở 1.1-08 để bạn tự kiểm tra bằng DevTools.
+
+  Nếu giữ nguyên từng task một prompt, thầy cô sẽ thấy quy trình rõ hơn, còn tôi
+  ít bước hơn nếu gộp. Bạn chọn cái nào? Nếu đồng ý đề xuất trên, tôi sẽ cập
+  nhật WBS (bỏ 1.1-06, sửa bảng commit) rồi làm luôn.
+
+> gộp lại đi tôi commit cho 1.1-03.
+
+  Searched for 1 pattern, read 1 file (ctrl+o to expand)
+
+● Cập nhật WBS: gộp 1.1-06 vào 1.1-04, ghi lại việc sửa PersonDetail.jsx ở
+  1.1-03, và sửa bảng commit.
+
+● Update(TASK_DECOMPOSITION.md)
+  ⎿  Added 1 line, removed 1 line
+      81  #### 1.1-03: PersonDetail dimensions (CSS)
+      82  - **Goal:** Define the final content's width/height as tokens s
+          o the skeleton can reuse them (R3).
+      83  - **Contract:** Custom properties in `:root` of `client/src/ind
+          ex.css`: `--detail-height: 16rem`, `--detail-max-width: 40rem` 
+          (D4). Component rules live in a CSS Module and use `var(--token
+          )`. Hex colors only inside `:root`.
+      84 -- **Files touched:** `client/src/index.css`, `client/src/pages/
+         -PersonDetail.module.css`                                       
+      84 +- **Files touched:** `client/src/index.css`, `client/src/pages/
+         +PersonDetail.module.css`. Applying the class needs a one-line c
+         +hange in `client/src/pages/PersonDetail.jsx` (import `styles`, 
+         +`className={styles.detail}`), committed separately as `feat(per
+         +son-detail): apply dimension styles to PersonDetail` right afte
+         +r this task.                                                   
+      85  - **Acceptance:**
+      86    - Fixed height/min-height at 375px and at the wide breakpoint
+          .
+      87    - Mobile-first, one column by default.
+
+● Update(TASK_DECOMPOSITION.md)
+  ⎿  Added 8 lines, removed 7 lines
+       89  - **Verification:** DevTools device toolbar at 375px; Computed
+            tab shows the expected box size.
+       90  - **Commit:** `style(person-detail): define content dimensions
+            as design tokens`
+       91  
+       92 -#### 1.1-04: Skeleton component (JSX)                         
+       93 -- **Goal:** Dimension-matched fallback that exposes loading st
+          -ate (R3, R4).                                                 
+       94 -- **Contract:** `Skeleton()` takes no props (D6) and returns o
+          -ne root `<div>` (pure layout wrapper, allowed by Sec. 3) with 
+          -`aria-busy="true"`. No text children. Placed in `client/src/co
+          -mponents/`.                                                   
+       92 +#### 1.1-04: Skeleton component with loading announcement (JSX
+          +)                                                             
+       93 +- **Goal:** Dimension-matched fallback that exposes loading st
+          +ate (R3, R4). This task absorbs the former 1.1-06.            
+       94 +- **Contract:** `Skeleton()` takes no props (D6) and returns o
+          +ne root `<div>` (pure layout wrapper, allowed by Sec. 3) with 
+          +`aria-busy="true"`. Placed in `client/src/components/`. It als
+          +o renders, via `createPortal` (from `react-dom`), the text "Lo
+          +ading person details" into the persistent `#live-status` eleme
+          +nt created in P2 (D1, Q8). The portal unmounts with the skelet
+          +on, which clears the message. If the element is not found, ren
+          +der nothing extra. No state, no effect.                       
+       95  - **Files touched:** `client/src/components/Skeleton.jsx`
+       96  - **Acceptance:**
+       97    - `aria-busy="true"` present on the root.
+       98 -  - No inline `style`.                                        
+       99 -  - No `aria-live` on this element (D1).                      
+      100 -- **Verification:** React DevTools Components tab; Elements pa
+          -nel shows the attribute.                                      
+      101 -- **Commit:** `feat(skeleton): add Skeleton fallback component
+          - with aria-busy`                                              
+       98 +  - No inline `style`; no `aria-live` on the skeleton itself (
+          +D1).                                                          
+       99 +  - The message appears in `#live-status` only while the skele
+          +ton is shown; the live region is never unmounted.             
+      100 +  - No `useEffect`; no console warnings under StrictMode.     
+      101 +- **Verification:** Slow 3G; Elements panel shows the attribut
+          +e and the text appearing/disappearing inside `#live-status`.  
+      102 +- **Commit:** `feat(skeleton): add Skeleton fallback with aria
+          +-busy and live announcement`                                  
+      103  
+      104  #### 1.1-05: Skeleton styling (CSS)
+      105  - **Goal:** Same box as `PersonDetail`, with a pure-CSS shimme
+           r.
+
+● Update(TASK_DECOMPOSITION.md)
+  ⎿  Added 1 line, removed 1 line
+      108  - **Acceptance:**
+      109    - Skeleton box size equals the final content box size at 375
+           px and at the wide breakpoint.
+      110    - Shimmer stops with reduced motion on.
+      111 -  - Text-vs-background contrast is not relevant (no text), but
+          - the shimmer is not the only loading signal (a11y text comes f
+          -rom Task 1.1-06).                                             
+      111 +  - Text-vs-background contrast is not relevant (no text), but
+          + the shimmer is not the only loading signal (a11y text comes f
+          +rom Task 1.1-04).                                             
+      112  - **Verification:** DevTools: Rendering tab -> emulate `prefer
+           s-reduced-motion`; compare box sizes in Computed.
+      113  - **Commit:** `style(skeleton): match PersonDetail dimensions 
+           and add reduced-motion shimmer`
+      114  
+
+● Update(TASK_DECOMPOSITION.md)
+  ⎿  Removed 11 lines
+      112  - **Verification:** DevTools: Rendering tab -> emulate `prefer
+           s-reduced-motion`; compare box sizes in Computed.
+      113  - **Commit:** `style(skeleton): match PersonDetail dimensions 
+           and add reduced-motion shimmer`
+      114  
+      115 -#### 1.1-06: Announce loading through the persistent live regi
+          -on (R4)                                                       
+      116 -- **Goal:** The live region created in P2 (id `live-status`) r
+          -eceives a short loading message while the skeleton is shown (D
+          -1).                                                           
+      117 -- **Contract:** `Skeleton` renders, via `createPortal` (import
+          - from `react-dom`), the text "Loading person details" into the
+          - `#live-status` element. The portal unmounts with the skeleton
+          -, which clears the message. If the element is not found, rende
+          -r nothing extra. No state, no effect.                         
+      118 -- **Files touched:** `client/src/components/Skeleton.jsx`     
+      119 -- **Acceptance:**                                             
+      120 -  - The live region exists in the DOM before the lazy chunk st
+          -arts loading and is never unmounted.                          
+      121 -  - The message appears only while the skeleton is shown.     
+      122 -  - No `useEffect`; no console warnings under StrictMode.     
+      123 -- **Verification:** Slow 3G; Elements panel shows the text app
+          -ear and disappear inside `#live-status`; Accessibility tree sh
+          -ows the status.                                               
+      124 -- **Commit:** `feat(a11y): announce lazy route loading via per
+          -sistent live region`                                          
+      125 -                                                              
+      115  #### 1.1-07: Lazy route and Suspense boundary (core feat)
+      116  - **Goal:** Route-level chunking (R1) and Suspense with skelet
+           on fallback (R2).
+      117  - **Contract:**
+
+● Update(TASK_DECOMPOSITION.md)  ⎿  Added 3 lines, removed 3 lines
+      149  | 4 | feat | P3 |
+      150  | 5 | feat | 1.1-02 |
+      151  | 6 | style | 1.1-03 |
+      152 -| 7 | feat | 1.1-04 |                                         
+      153 -| 8 | style | 1.1-05 |                                        
+      154 -| 9 | feat | 1.1-06 |                                         
+      152 +| 7 | feat | 1.1-03 follow-up (apply class in `PersonDetail.js
+          +x`) |                                                         
+      153 +| 8 | feat | 1.1-04 (includes the former 1.1-06) |            
+      154 +| 9 | style | 1.1-05 |                                        
+      155  | 10 | feat | 1.1-07 |
+      156  
+      157  No JSX, CSS, and logic are mixed within one commit. The Sprint
+            1 target (2 feat commits) is not enforced for this exercise; 
+           P2/P3 are only the minimum scaffold.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Giờ làm 1.1-07: route lazy bọc trong Suspense.
+
+● Write(client\src\App.jsx)
+  ⎿  Added 12 lines
+       1 +import { lazy, Suspense } from 'react';                        
+       2  import { Route, Routes } from 'react-router';
+       3  import Layout from './components/Layout.jsx';
+       4 +import Skeleton from './components/Skeleton.jsx';              
+       5  
+       6 +const PersonDetail = lazy(() => import('./pages/PersonDetail.js
+         +x'));                                                          
+       7 +                                                               
+       8  export default function App() {
+       9    return (
+      10      <Routes>
+      11        <Route element={<Layout />}>
+      12          <Route index element={<h2>Home</h2>} />
+      13 +        <Route                                                 
+      14 +          path="person"                                        
+      15 +          element={                                            
+      16 +            <Suspense fallback={<Skeleton />}>                 
+      17 +              <PersonDetail />                                 
+      18 +            </Suspense>                                        
+      19 +          }                                                    
+      20 +        />                                                     
+      21        </Route>
+      22      </Routes>
+      23    );
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Đã xong cập nhật WBS, 1.1-04, 1.1-05 và 1.1-07, chưa commit. vite build pass
+  và tách ra chunk riêng PersonDetail-*.js (0.52 kB) cùng CSS riêng, nên
+  code-splitting hoạt động. Phần chạy thật trên trình duyệt (CLS, Slow 3G, a11y)
+  thuộc 1.1-08, bạn tự kiểm tra.
+
+  Thay đổi:
+  - TASK_DECOMPOSITION.md: gộp 1.1-06 vào 1.1-04, ghi lại việc sửa
+    PersonDetail.jsx ở 1.1-03, sửa bảng commit (còn 10 commit).
+  - Skeleton.jsx (client/src/components/Skeleton.jsx): <div aria-busy="true">
+    kèm createPortal đẩy chữ "Loading person details" vào #live-status, không có
+    state hay effect.
+  - Skeleton.module.css (client/src/components/Skeleton.module.css): cùng
+    width/max-width/height với PersonDetail qua token, shimmer bằng @keyframes,
+    tắt khi prefers-reduced-motion.
+  - index.css (client/src/index.css): thêm 2 token màu skeleton trong :root.
+  - App.jsx (client/src/App.jsx): lazy(() => import('./pages/PersonDetail.jsx'))
+    ở đầu module, route person bọc trong <Suspense fallback={<Skeleton />}>.
+
+  Điều tôi chưa chắc:
+  - Skeleton gọi document.getElementById ngay khi render. Với StrictMode và việc
+    Layout đã mount trước thì hoạt động, nhưng hãy xem Elements panel khi
+    throttle Slow 3G để chắc chữ có xuất hiện trong #live-status.
+  - Skeleton dùng một màu thuần sáng; không có chữ nên không có yêu cầu độ tương
+    phản chữ.
+
+  Commit đề xuất (theo thứ tự):
+  git add TASK_DECOMPOSITION.md
+  git commit -m "docs(spec): merge live announcement into Skeleton task and
+  record 1.1-03 follow-up"
+
+  git add client/src/components/Skeleton.jsx
+  git commit -m "feat(skeleton): add Skeleton fallback with aria-busy and live
+  announcement"
+
+  git add client/src/components/Skeleton.module.css client/src/index.css
+  git commit -m "style(skeleton): match PersonDetail dimensions and add
+  reduced-motion shimmer"
+
+  git add client/src/App.jsx
+  git commit -m "feat(router): lazy-load PersonDetail route behind Suspense
+  skeleton"
+
+  git status cho thấy PersonDetail.jsx và PersonDetail.module.css không còn thay
+  đổi, nên bạn đã commit 1.1-03 và phần theo sau. Hai file trong index.css thay
+  đổi ở commit thứ 3 chỉ là token skeleton.
+
+  Bước 1.1-08 bạn tự làm:
+  1. Chạy npm run dev trong client/, mở /person.
+  2. DevTools Network chọn Slow 3G, bỏ cache, kiểm tra chunk PersonDetail chỉ
+     tải khi vào route.
+  3. Performance hoặc Lighthouse: CLS = 0 ở 375px và màn rộng.
+  4. Accessibility tree: aria-busy="true" khi tải, #live-status hiện chữ rồi
+     mất.
+  5. Console không có cảnh báo; chạy các lệnh git grep ở mục 13 của rule.
+
+> đề bài yêu cầu kiểm tra gì hay bạn đang hướng dẫn tôi kiểm tra toàn bộ trong
+  rule.
+
+● Tôi đang hướng dẫn kiểm tra theo rule của dự án, không phải theo đề.
+  Screenshot Ex 1.1 chỉ nêu 4 yêu cầu và không có bước kiểm tra nào.
+
+  Đề thực sự yêu cầu, tương ứng với những gì cần xác nhận:
+  - Code-splitting: có chunk riêng cho PersonDetail, chỉ tải khi vào /person.
+    Bước vite build đã cho thấy chunk tách ra. Mở thêm tab Network để thấy nó
+    tải lúc vào route là đủ.
+  - Suspense: skeleton hiện trước rồi mới tới nội dung.
+  - CLS = 0: skeleton cùng kích thước với nội dung. Chỉ cần so sánh hai khung
+    trong DevTools hoặc xem Lighthouse báo CLS = 0.
+  - Accessibility: có aria-busy="true". Phần aria-live tôi làm khác đề một chút
+    (đặt ở live region cố định).
+
+  Bước "Slow 3G", Profiler, 375px, bàn phím, git grep checkpoint đến từ
+  project-rules.md (mục 5, 9, 13), không nằm trong đề. Chúng phục vụ phần chấm
+  theo quy trình và AI_FAILURE_AUDIT.md của bạn, nên tùy bạn có cần hay không.
+
+  Tối thiểu để nộp Ex 1.1: chạy npm run dev, mở /person với Slow 3G, kiểm tra 3
+  điều: chunk tách riêng, skeleton rồi mới tới nội dung, và CLS = 0. Sau đó tick
+  các mục trong "Done" của rule nếu giảng viên yêu cầu. Phần còn lại có thể bỏ
+  qua cho bài này.
+
+[Image #2]
+
+> hơi bị lâu nhỉ?
+
+● Đúng là lâu, nhưng nguyên nhân là cách đo, không phải code của bạn.
+
+  Vì sao chậm: bạn đang chạy npm run dev. Vite dev server không đóng gói, nó
+  phục vụ từng module riêng lẻ và các thư viện chưa nén. Trong ảnh,
+  react-dom_client.js nặng khoảng 3 MB mất 1.7 phút, react-router.js hơn 1 phút.
+  Tất cả bị throttle 3G nên mới chậm như vậy. Bản build thật nhỏ hơn nhiều (JS
+  chính khoảng 83 kB gzip).
+
+  Ảnh cho thấy lazy loading đã hoạt động: PersonDetail.jsx có Initiator là
+  App.jsx:6, và PersonDetail.module.css được tải theo sau. Nghĩa là chunk của
+  route được yêu cầu riêng, đúng tiêu chí Code-Splitting của đề.
+
+  Cách đo cho đúng: chạy bản production để thấy hành vi thật.
+  cd client
+  npm run build
+  npm run preview
+  Mở địa chỉ preview, bật throttle, tick Disable cache, rồi bấm sang /person.
+  Khi đó Network chỉ hiện vài file, trong đó có PersonDetail-*.js tải riêng, và
+  skeleton sẽ hiện đủ lâu để bạn thấy và đo CLS.
+
+  Cần xem kỹ: góc phải DevTools báo 1 lỗi đỏ và 3 cảnh báo. Nhiều file như
+  index.ts.js, i18n.js, FeedbackDialog.js, content-script.css trong danh sách
+  đến từ extension của trình duyệt, không phải code của bạn. Hãy mở tab Console
+  xem lỗi đó là gì; tốt nhất kiểm tra trong cửa sổ ẩn danh đã tắt extension. Nếu
+  lỗi nằm ở Skeleton hay Layout, gửi tôi nội dung để tôi xem.
+
+[Image #3]
+
+> throttle là sao nhỉ bật ở đâu?
+
+● Throttle là giả lập mạng chậm trong DevTools để bạn thấy trang tải ở tốc độ
+  3G, thay vì tốc độ mạng thật của máy. Bạn đã bật nó rồi: ô thả xuống ngay cạnh
+  "Disable cache" đang ghi 3G (ảnh trước là chọn lúc nào đó, ảnh này vẫn còn).
+
+  Cách bật hoặc đổi:
+  1. Mở DevTools bằng F12, vào tab Network.
+  2. Ô thả xuống bên phải "Disable cache" mặc định ghi "No throttling". Bấm vào
+     và chọn một mức: Fast 3G, Slow 3G hoặc 3G. Đề nói Slow 3G nên chọn Slow 3G.
+
+  Ảnh này cho thấy bản production chạy đúng:
+  - Chỉ có 5 request, tổng 85.5 kB, tải xong trong 7.82 giây.
+  - PersonDetail-BffXJ4MQ.js (0.8 kB) và PersonDetail-CwdrohzA.css là chunk
+    riêng của route, đúng tiêu chí Code-Splitting. Chunk chính index-Dgj-CuNt.js
+    là 82.6 kB.
+
+  Có một điều chưa thấy trong ảnh: trang này bạn mở thẳng vào /person (request
+  đầu tiên tên person), nên chunk PersonDetail tải ngay lúc đầu. Để thấy
+  skeleton rồi mới tới nội dung, làm theo:
+  1. Mở trang chủ / trước.
+  2. Bật throttle Slow 3G, tick Disable cache, bấm nút xóa (🚫) trong Network.
+  3. Bấm link Person trên nav, không tải lại trang.
+
+  Lúc đó Network chỉ hiện chunk PersonDetail mới tải, và skeleton xuất hiện
+  trong lúc chờ. Ở bản production chunk chỉ 0.8 kB nên skeleton có thể chỉ
+  thoáng qua; muốn nhìn rõ hơn bạn có thể chọn mức chậm hơn bằng "Add..." để tạo
+  profile tùy chỉnh.
+
+  Nút cảnh báo màu cam cạnh chữ Network là do extension hoặc cache bị tắt, không
+  liên quan tới code.
+
+[Image #4]
+
+> từ home về peson nó chỉ hiện thế này
+
+● Đó là kết quả đúng, và nó chứng minh lazy loading hoạt động.
+
+  Ảnh cho thấy: khi bấm từ Home sang Person, trình duyệt chỉ tải thêm 2 request:
+  - PersonDetail-BffXJ4MQ.js (0.8 kB)
+  - PersonDetail-CwdrohzA.css (0.5 kB)
+
+  Tổng 1.3 kB, mất khoảng 2 giây do bị throttle. Phần còn lại của app đã có sẵn
+  từ trang chủ, và code của PersonDetail không nằm trong bundle ban đầu. Đây
+  chính là tiêu chí Code-Splitting của đề.
+
+  Về skeleton: tôi không thấy skeleton trong ảnh vì ảnh chụp sau khi tải xong.
+  Trong khoảng 2 giây chờ đó, skeleton đáng lẽ hiện ra ở đúng vị trí và kích
+  thước của khung nội dung. Để xác nhận, bạn có thể:
+  - Quay video ngắn hoặc chụp ngay sau khi bấm link.
+  - Hoặc vào Elements, tìm #live-status rồi bấm Person, bạn sẽ thấy chữ "Loading
+    person details" hiện rồi biến mất.
+  - Hoặc tạo profile chậm hơn: bấm ô thả xuống throttle, chọn "Add..." rồi đặt
+    tốc độ tải khoảng 50 kb/s và độ trễ 3000 ms, để skeleton hiện lâu hơn.
+
+  Khung nội dung ở đây có viền và cao đúng 16rem. Nếu skeleton lúc hiện có cùng
+  kích thước thì nội dung xuất hiện sẽ không bị nhảy, tức CLS = 0. Để đo con số,
+  mở tab Performance hoặc Lighthouse và xem mục Layout Shift.
+
+> vậy là xong ex 1 rồi nhỉ?
+
+● Gần xong. Phần code của Ex 1.1 đã làm đủ, nhưng còn vài điều chưa được kiểm
+  chứng.
+
+  Đã xác nhận:
+  - Code-splitting: bản production chỉ tải thêm chunk PersonDetail khi bấm sang
+    /person.
+  - Suspense, Skeleton và aria-busy đã có trong code, vite build pass.
+
+  Chưa xác nhận (đề có yêu cầu):
+  1. Skeleton thực sự hiện ra: ảnh bạn gửi chụp sau khi tải xong, nên chưa ai
+     thấy skeleton. Chữ "Loading person details" vào #live-status cũng chưa được
+     xem.
+  2. CLS = 0: chưa đo con số. Chạy Lighthouse hoặc Performance trên bản preview,
+     bấm từ Home sang Person, xem Layout Shift.
+  3. Console: ở ảnh dev trước có 1 lỗi và 3 cảnh báo mà chúng ta chưa biết nội
+     dung. Bản production không còn hiện chúng ở góc, nhưng hãy mở tab Console
+     để chắc không có cảnh báo nào từ code của bạn.
+
+  Việc còn lại để nộp:
+  - Commit 4 mục đang chờ (WBS, Skeleton, style Skeleton, route lazy) nếu bạn
+    chưa làm.
+  - Chạy các lệnh git grep ở mục 13 của rule.
+  - AI_FAILURE_AUDIT.md cần ít nhất 3 lỗi AI đã xác minh, hiện chưa có file này.
+    Nếu thầy cô yêu cầu thì mới cần, nhưng chưa tính cho riêng Ex 1.1.
+
+  Bạn làm ba kiểm tra trên (mất vài phút) rồi coi như xong. Nếu thấy skeleton bị
+  lệch kích thước hay có cảnh báo, gửi lại cho tôi.
+
+> kiểm tra lại các commit cho tôi đi rồi chuẩn bị làm bài tiếp theo
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● Tôi đã kiểm tra lịch sử commit, 10 commit đều đúng thứ tự, mỗi commit một mối
+  quan tâm và không dính JSX với CSS. Chỉ có một file thừa cần xử lý.
+
+  Các commit (từ cũ đến mới):
+
+  ┌─────┬──────────────────────────────────┬───────────────────────────┐
+  │  #  │              Commit              │         Kết luận          │
+  ├─────┼──────────────────────────────────┼───────────────────────────┤
+  │ 1   │ docs(spec) WBS                   │ Đúng, đứng trước mọi code │
+  ├─────┼──────────────────────────────────┼───────────────────────────┤
+  │ 2   │ chore(client) scaffold           │ Đúng                      │
+  ├─────┼──────────────────────────────────┼───────────────────────────┤
+  │ 3   │ feat(router) layout              │ Đúng                      │
+  ├─────┼──────────────────────────────────┼───────────────────────────┤
+  │ 4   │ feat(router) routes              │ Đúng                      │
+  ├─────┼──────────────────────────────────┼───────────────────────────┤
+  │ 5   │ feat(person-detail) page         │ Đúng                      │
+  ├─────┼──────────────────────────────────┼───────────────────────────┤
+  │ 6   │ style(person-detail) tokens      │ Đúng, tách riêng khỏi JSX │
+  ├─────┼──────────────────────────────────┼───────────────────────────┤
+  │ 7   │ feat(person-detail) apply styles │ Đúng, như WBS ghi nhận    │
+  ├─────┼──────────────────────────────────┼───────────────────────────┤
+  │ 8   │ docs(spec) WBS cập nhật          │ Đúng                      │
+  ├─────┼──────────────────────────────────┼───────────────────────────┤
+  │ 9   │ feat(skeleton)                   │ Đúng                      │
+  ├─────┼──────────────────────────────────┼───────────────────────────┤
+  │ 10  │ style(skeleton)                  │ Đúng                      │
+  ├─────┼──────────────────────────────────┼───────────────────────────┤
+  │ 11  │ feat(router) lazy route          │ Đúng                      │
+  └─────┴──────────────────────────────────┴───────────────────────────┘
+
+  Thực ra có 11 commit, không phải 10 như tôi nói ở trên.
+
+  Checkpoint trong rule: git grep các pattern bị cấm, http:// và .env bị commit
+  đều không ra kết quả, nghĩa là sạch.
+
+  Một điểm lệch: có file thừa package-lock.json ở gốc repo, chưa được theo dõi,
+  nội dung gần như trống ("packages": {}). Nó sinh ra do một lần npm install
+  chạy nhầm ở thư mục gốc, tôi tạo ra. Rule nói repo chỉ có client/ và server/
+  nên file này không nên commit. Bạn xóa bằng:
+  rm package-lock.json
+  Tôi chưa xóa vì bạn muốn tự thao tác trên repo.
+
+  Hai điều nhỏ cần lưu ý:
+  - Message của các commit feat(person-detail) số 7 hơi nhiều chữ nhưng ổn.
+  - Tôi chưa thấy commit nào có co-author, đúng ý bạn sẽ tự thêm.
+
+  Chuẩn bị bài tiếp theo: gửi tôi screenshot của bài kế tiếp, theo rule tôi chỉ
+  lấy yêu cầu từ ảnh. Rule hiện chỉ gồm Ex 1.1, 1.2, 1.2.1, 1.2.2, 1.3, 1.7.1,
+  nên nếu bài mới ngoài danh sách, bạn nên bổ sung rule trước. Mỗi bài tôi sẽ
+  viết thêm một mục vào TASK_DECOMPOSITION.md rồi chờ bạn chốt trước khi viết
+  code.
+
+[Image #5]
+
+> xóa file thừa giúp tôi đi rồi lên kế hoạch cho bài tiếp theo
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● Tôi đã xóa package-lock.json thừa ở gốc repo, git status sạch. Sau đó tôi viết
+  WBS cho Ex 1.2 và 1.2.1 vào cuối TASK_DECOMPOSITION.md, chưa viết code.
+
+  Phân tích: phần lớn yêu cầu đã làm xong ở P2 và P3, nên bài này chỉ bổ sung
+  phần còn thiếu.
+
+  ┌───────────────────────────────────────────┬─────────────────────────────┐
+  │                  Yêu cầu                  │         Hiện trạng          │
+  ├───────────────────────────────────────────┼─────────────────────────────┤
+  │ Routes thay Switch, element={<Layout />}, │                             │
+  │  Outlet, NavLink callback, import từ      │ Đã xong                     │
+  │ 'react-router'                            │                             │
+  ├───────────────────────────────────────────┼─────────────────────────────┤
+  │ Route cha path="/", con index là <Home /> │ Thiếu: cha chưa có path,    │
+  │  và about là <About />                    │ Home đang là <h2> viết tạm, │
+  │                                           │  chưa có route about        │
+  ├───────────────────────────────────────────┼─────────────────────────────┤
+  │ Link About trên nav                       │ Thiếu                       │
+  └───────────────────────────────────────────┴─────────────────────────────┘
+
+  Những chỗ tôi không chép nguyên screenshot, vì trái rule:
+  - Link Home trong screenshot không có end, nên Home sẽ sáng ở mọi trang. Tôi
+    giữ end.
+  - Layout trong screenshot để <nav> và <Outlet /> là hai phần tử ngang hàng,
+    không có <main>. Layout của bạn đã đúng rule, giữ nguyên.
+  - Screenshot dùng class 'active' và ''. Tôi giữ CSS Module.
+
+  Các task (4 commit code, không trộn JSX với CSS):
+  1. docs(spec): chốt WBS này.
+  2. feat(pages): pages/Home.jsx.
+  3. feat(pages): pages/About.jsx.
+  4. feat(router): App.jsx đổi sang path="/" và thêm route about.
+  5. feat(router): thêm link About vào Layout.jsx.
+  6. Kiểm tra bằng tay, không có commit.
+
+  Quyết định tôi chốt:
+  - Gộp 1.2 và 1.2.1 làm một bài, vì cùng một slide.
+  - Home và About là component riêng, mỗi cái một h2 và một câu ngắn, không lazy
+    vì đề không yêu cầu.
+  - Không thêm route *. URL sai sẽ để cho bài xử lý 404 sau này.
+
+  Cần bạn xác nhận 2 điểm:
+  - URL sai (ví dụ /abc) sẽ hiện layout với phần main trống cho đến bài 404.
+    Chấp nhận được không?
+  - Route Person giữ nguyên, không đổi tên hay di chuyển?
+
+  Bạn commit WBS trước rồi bảo tôi bắt đầu. Vì task nhỏ, tôi sẽ làm liền các
+  task 1.2-02 đến 1.2-05 một lượt, mỗi task một commit đề xuất, để bạn xem diff
+  một lần.
+
+> các task nhỏ quá gộp lại rồi làm 1 thể commit chung luôn đi đừng để task quá
+  nhỏ
+
+● Gộp 1.2-02 đến 1.2-05 thành một task, một commit feat. Tất cả đều là JSX và
+  cùng một mối quan tâm (router layout), nên không vi phạm quy tắc không trộn
+  JSX/CSS/logic. WBS chưa commit nên tôi sửa thẳng.
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● Đã gộp xong, vite build pass, git grep các pattern router bị cấm không ra kết
+  quả, chưa commit. Chunk PersonDetail vẫn tách riêng, nên route lazy của Ex 1.1
+  không bị ảnh hưởng. Tôi chưa mở trình duyệt để thử bấm giữa các link.
+
+  WBS: 1.2-02 đến 1.2-05 gộp thành một task 1.2-02, bảng commit còn 2 dòng.
+
+  Code thay đổi:
+  - Home.jsx (client/src/pages/Home.jsx) và About.jsx
+    (client/src/pages/About.jsx) (mới): mỗi cái một <section> có h2 và một câu
+    ngắn.
+  - App.jsx (client/src/App.jsx): route cha path="/", con gồm index là Home,
+    person giữ nguyên lazy, about là About.
+  - Layout.jsx (client/src/components/Layout.jsx): thêm link About sau Person,
+    cùng kiểu callback className, Home vẫn có end.
+
+  Commit đề xuất (2 commit):
+  git add TASK_DECOMPOSITION.md
+  git commit -m "docs(spec): add WBS for exercises 1.2 and 1.2.1 router layout"
+
+  git add client/src/pages/Home.jsx client/src/pages/About.jsx
+  client/src/App.jsx client/src/components/Layout.jsx
+  git commit -m "feat(router): add home and about routes with nested layout
+  navigation"
+
+  Bạn tự kiểm tra nhanh (1.2-03): chạy npm run dev, gõ lần lượt /, /about,
+  /person vào thanh địa chỉ và bấm từng link. Mỗi lần chỉ một link được tô đậm,
+  và Home không sáng khi ở /about hay /person.
+
+  Gửi screenshot bài tiếp theo khi bạn sẵn sàng.
+
+[Image #6]
+
+> nó báo lỗi gì đây
+
+● Lỗi do bạn đang đứng sai thư mục. Terminal đang ở
+  ...\Lab4\MSIS207_24520199_Nguyen_Thanh_Binh_Lab4\client, còn
+  TASK_DECOMPOSITION.md nằm ở thư mục cha (gốc repo), nên git add
+  TASK_DECOMPOSITION.md báo did not match any files.
+
+  Lệnh git commit ngay sau đó chạy khi chưa có gì được stage, nên báo no changes
+  added to commit. Không có commit nào được tạo và không mất gì.
+
+  Cách sửa: chạy lại từ gốc repo.
+  cd ..
+  git add TASK_DECOMPOSITION.md
+  git commit -m "docs(spec): add WBS for exercises 1.2 and 1.2.1 router layout"
+
+  git add client/src/pages/Home.jsx client/src/pages/About.jsx
+  client/src/App.jsx client/src/components/Layout.jsx
+  git commit -m "feat(router): add home and about routes with nested layout
+  navigation"
+
+  Nếu muốn ở lại thư mục client, dùng đường dẫn lên cấp: git add
+  ../TASK_DECOMPOSITION.md.
+
+  Chạy git status trước mỗi lần commit để chắc file đã vào mục "Changes to be
+  committed".
+
+> giờ tôi chụp ảnh bài tiếp theo hả?
+
+● Đúng, bạn chụp screenshot bài tiếp theo rồi gửi cho tôi. Theo rule, tôi chỉ
+  lấy yêu cầu từ ảnh, nên ảnh cần rõ cả phần yêu cầu lẫn khung code.
+
+  Trước khi gửi, kiểm tra hai việc:
+  - Đã commit xong 2 commit của Ex 1.2 chưa (git status sạch).
+  - Bài tiếp theo có nằm trong phạm vi rule hiện tại không. Rule đang gồm Ex
+    1.1, 1.2, 1.2.1, 1.2.2, 1.3 và 1.7.1. Nếu là bài khác, ví dụ Homework, bạn
+    nói để tôi bổ sung rule.
+
+  Một lưu ý: trong danh sách rule có Ex 1.2.2, nhiều khả năng là bài kế tiếp
+  (rule nhắc tới master-detail và 404). Gửi ảnh của đúng một bài mỗi lần, tôi sẽ
+  viết WBS rồi chờ bạn chốt trước khi làm code.
+
+[Image #7]
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● Lệnh ghi bị lỗi cú pháp shell nên chưa có gì được ghi. Tôi ghi vào file tạm
+  bằng công cụ Write rồi nối vào WBS.
+
+  Made 1 scratchpad edit +113, ran 1 shell command (ctrl+o to expand)
+● Tôi đã thêm WBS Ex 1.2.2 vào cuối TASK_DECOMPOSITION.md, chưa viết code. Bạn
+  đã commit xong Ex 1.2 (git status chỉ còn file WBS thay đổi).
+
+  Yêu cầu của slide: 4 mục: CSS Grid minmax(280px, 1fr) 2fr, useParams(), tìm
+  bằng people.find() và hiện trạng thái 404 nếu id sai, và dùng dl/dt/dd.
+
+  Chỗ lệch với rule, tôi theo rule:
+  - Slide đặt grid hai cột không điều kiện, còn rule yêu cầu mobile-first (một
+    cột mặc định, hai cột từ breakpoint). Tôi chọn breakpoint 48rem (768px).
+  - Slide dùng className="person-details" global, tôi dùng CSS Module.
+  - Slide chỉ cho thấy phần detail. Hai cột cần một danh sách bên trái, nên tôi
+    thêm danh sách tối thiểu là nav chứa các NavLink.
+
+  Các quyết định tôi chốt:
+  - Dữ liệu: 5 người hư cấu với id dạng chuỗi ('1' đến '5') trong lib/people.js.
+  - Lookup là hàm thuần findPersonById(people, id), nên làm theo test trước.
+  - Route: /people (danh sách và Outlet), /people/:id (detail). Ex 1.1 giữ
+    nguyên: detail vẫn lazy, vẫn bọc Suspense với skeleton cùng kích thước.
+  - Id sai (ví dụ /people/999): hiện NotFoundState có role="alert" kèm link quay
+    về /people.
+
+  5 commit (đã gộp để không quá nhỏ):
+
+  ┌─────┬────────────┬───────────────────────────────────────────────────────┐
+  │  #  │    Loại    │                       Nội dung                        │
+  ├─────┼────────────┼───────────────────────────────────────────────────────┤
+  │ 1   │ docs(spec) │ Chốt WBS                                              │
+  ├─────┼────────────┼───────────────────────────────────────────────────────┤
+  │ 2   │ test       │ 6 test cho findPersonById (chạy ra đỏ)                │
+  ├─────┼────────────┼───────────────────────────────────────────────────────┤
+  │ 3   │ feat       │ lib/people.js (dữ liệu và hàm lookup, test xanh)      │
+  ├─────┼────────────┼───────────────────────────────────────────────────────┤
+  │ 4   │ style      │ Grid responsive cho master-detail                     │
+  ├─────┼────────────┼───────────────────────────────────────────────────────┤
+  │ 5   │ feat       │ People.jsx, NotFoundState.jsx, refactor               │
+  │     │            │ PersonDetail.jsx, App.jsx, link nav                   │
+  └─────┴────────────┴───────────────────────────────────────────────────────┘
+
+  Commit style đứng trước commit JSX để build không bao giờ tham chiếu file CSS
+  chưa có.
+
+  Cần bạn xác nhận 2 điểm:
+  - Q1: Thêm danh sách bên trái dù slide không vẽ ra. Được không?
+  - Q2: Bỏ URL /person của Ex 1.1 và đổi link nav "Person" thành "People". Lazy
+    loading, Suspense và skeleton vẫn nằm ở /people/:id. Được không?
+
+  Bạn commit WBS rồi bảo tôi bắt đầu; tôi sẽ làm 2 đến 5 một lượt và dừng lại
+  cho bạn xem git diff.
+
+> cho tôi lệnh commit rồi làm theo ý bạn đi
+
+● Lệnh commit WBS (chạy từ gốc repo):
+  git add TASK_DECOMPOSITION.md
+  git commit -m "docs(spec): add WBS for exercise 1.2.2 master-detail routing"
+
+  Tôi làm tiếp task 1.2.2-02 (test trước, chạy ra đỏ).
+
+● Write(client\src\lib\people.test.js)
+  ⎿  Wrote 30 lines to client\src\lib\people.test.js
+       1 import { describe, expect, it } from 'vitest';
+       2 import { PEOPLE, findPersonById } from './people.js';
+       3
+       4 describe('findPersonById', () => {
+       5   it('returns the person for an existing id', () => {
+       6     expect(findPersonById(PEOPLE, '1')).toBe(PEOPLE[0]);
+       7   });
+       8
+       9   it('finds every seeded person', () => {
+      10     for (const person of PEOPLE) {
+     … +20 lines (ctrl+o to expand)
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Test đã đỏ đúng như dự kiến (thiếu module people.js). Giờ làm 1.2.2-03 đến
+  1.2.2-05.
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● Đã làm xong các task 1.2.2-02 đến 1.2.2-05, chưa commit. Kết quả tôi chạy
+  thật: npx vitest run xanh 6/6 (trước khi có people.js thì đỏ đúng như dự
+  kiến), vite build pass và chunk PersonDetail vẫn tách riêng. Phần giao diện
+  (/people/999, 375px so với 768px, skeleton Slow 3G) tôi chưa mở trình duyệt,
+  bạn tự kiểm tra ở bước 1.2.2-06.
+
+  Thay đổi:
+  - people.test.js (client/src/lib/people.test.js): 6 test cho findPersonById.
+  - people.js (client/src/lib/people.js): 5 người hư cấu với id chuỗi và hàm
+    findPersonById.
+  - People.module.css (client/src/pages/People.module.css): một cột mặc định, từ
+    48rem (768px) thành minmax(280px, 1fr) 2fr.
+  - People.jsx (client/src/pages/People.jsx): h2, nav với NavLink và <Outlet />,
+    key={person.id}.
+  - NotFoundState.jsx (client/src/components/NotFoundState.jsx): role="alert"
+    kèm link về /people.
+  - PersonDetail.jsx (client/src/pages/PersonDetail.jsx): dùng useParams() và
+    findPersonById, id sai thì hiện NotFoundState, nội dung là dl với Name và
+    Role.
+  - App.jsx (client/src/App.jsx): route people với index và :id; :id vẫn lazy và
+    có Suspense với skeleton.
+  - Layout.jsx (client/src/components/Layout.jsx): link nav "Person" đổi thành
+    "People" trỏ tới /people.
+
+  Điều cần lưu ý: git grep key={i ra một dòng, đó là key={item.key} trong
+  PersonDetail.jsx, khớp nhầm của pattern, không phải key={index}.
+
+  Lệnh commit (chạy từ gốc repo, theo đúng thứ tự):
+  git add client/src/lib/people.test.js
+  git commit -m "test(people): add failing tests for findPersonById"
+
+  git add client/src/lib/people.js
+  git commit -m "feat(people): add fictional people data and findPersonById"
+
+  git add client/src/pages/People.module.css
+  git commit -m "style(people): add responsive master-detail grid"
+
+  git add client/src/pages/People.jsx client/src/components/NotFoundState.jsx
+  client/src/pages/PersonDetail.jsx client/src/App.jsx
+  client/src/components/Layout.jsx
+  git commit -m "feat(router): add master-detail people routes with 404 state"
+
+  Bạn tự kiểm tra (1.2.2-06): chạy npm run dev trong client/ rồi thử:
+  - /people (có danh sách và dòng nhắc chọn người), /people/2, /people/999 (phải
+    hiện thông báo kèm link quay lại).
+  - Thu nhỏ cửa sổ xuống 375px: một cột và không có thanh cuộn ngang; từ 768px
+    trở lên: hai cột.
+  - Slow 3G mở một người: skeleton vẫn hiện, kích thước không nhảy.
+
+[Image #8]
+
+> xong bài 1.2.2 rồi nhỉ. làm 1.3 đi
+
+  Made 1 scratchpad edit +74, ran 1 shell command (ctrl+o to expand)
+
+● Về 1.2.2: phần code và test xong (vitest xanh 6/6). Việc bạn tự kiểm tra trên
+  trình duyệt (/people/999, 375px so với 768px, skeleton khi Slow 3G) tôi chưa
+  xác nhận được. git status hiện chỉ còn file WBS thay đổi, nghĩa là bạn đã
+  commit hết code của 1.2.2.
+
+  Với 1.3, tôi đã viết phần WBS vào cuối TASK_DECOMPOSITION.md, không có code.
+
+  Slide này là bài phân tích, không phải bài xây dựng. Nó mô tả một cặp
+  InputField + SimpleForm cũ dùng 5 useEffect nối chuỗi, kèm log trace và 3 lỗi:
+  render dồn (5 lần cho một phím bấm), race condition và nguy cơ vòng lặp vô
+  hạn. Slide không đưa code cũ và không yêu cầu làm hay sửa form. Theo rule
+  (scope guard) tôi không tự dựng form ở đây, form Context thuộc các bài sau.
+
+  Nội dung phần WBS:
+  - Đọc trace: từng bước của một lần gõ phím, effect nào làm gì và vì sao sai.
+  - Giải thích 3 lỗi: mỗi setState trong effect lại sinh một lần render, effect
+    chạy muộn có thể ghi đè kết quả mới, và cha với con phụ thuộc lẫn nhau thì
+    gây Maximum update depth exceeded.
+  - Bảng thay thế theo rule:
+    - #1 và #4 (đồng bộ cha và con): xóa, chỉ giữ một values trong FormProvider.
+    - #2 và #3 (kiểm tra lỗi, tính hợp lệ): tính ngay lúc render bằng
+      validateForm(values).
+    - #5 (tự cuộn tới lỗi): không làm vì không có bài nào yêu cầu. Nếu cần sau
+      này thì làm trong handler submit, không dùng effect.
+  - Một commit duy nhất: docs(spec).
+
+  Hai điều tôi nêu để bạn biết:
+  - Log trace ghi --target Ex1.6 trong khi slide là Ex 1.3. Tôi coi đó là ví dụ
+    cũ mà bài sau nhắc tới, không đổi phạm vi.
+  - AI_FAILURE_AUDIT.md cần ít nhất 3 lỗi AI có thật và đã kiểm chứng. Tôi không
+    bịa lỗi từ slide này. Một lỗi thật đã xảy ra trong buổi làm việc là file
+    package-lock.json thừa ở gốc repo do tôi chạy npm install nhầm thư mục. Nếu
+    bạn muốn, đó có thể là một mục audit.
+
+  Cần bạn xác nhận: đề bài 1.3 của bạn chỉ cần phần phân tích này, hay giảng
+  viên còn yêu cầu bài viết hoặc demo code cũ? Nếu có, gửi tôi nội dung yêu cầu.
+
+  Lệnh commit:
+  git add TASK_DECOMPOSITION.md
+  git commit -m "docs(spec): add WBS for exercise 1.3 useEffect validation
+  anti-patterns"
+
+[Image #9]
+
+> vậy làm 1.7.1 đi
+
+  Made 1 scratchpad edit +135, ran 1 shell command (ctrl+o to expand)
+
+● Tôi đã viết WBS Ex 1.7.1 vào cuối TASK_DECOMPOSITION.md, chưa viết code. Bài
+  này lớn nhất từ đầu tới giờ vì có cả server Express lẫn client, và có một chỗ
+  cần bạn quyết định, nên tôi dừng ở bước kế hoạch.
+
+  Yêu cầu của slide:
+  - Hook useForumMessages dùng AbortController để không rò rỉ và không lộn thứ
+    tự khi đổi kênh nhanh.
+  - Hiển thị tin nhắn bằng <dl> với Fragment key={msg.id}.
+  - Express dùng middleware cors().
+  - Kiểm tra chặt body của POST.
+
+  Chỗ code trong slide trái với rule (theo rule):
+  - Không kiểm tra res.ok, nên lỗi 404 hay 500 vẫn bị parse như dữ liệu.
+  - Lỗi chỉ ghi vào console.error, người dùng không thấy gì.
+  - Hook chỉ trả về mảng msgs, không có trạng thái loading hay lỗi. Tôi dùng
+    dạng 4 trạng thái { status, data, error, retry } theo rule. Đây là điểm xung
+    đột thật sự (Q1).
+  - URL tương đối /api/..., rule yêu cầu lấy gốc từ VITE_API_URL.
+
+  Các quyết định tôi chốt:
+  - Server: server/ là ESM, chỉ dùng express và cors, kho tin nhắn là Map trong
+    bộ nhớ với 2 đến 3 tin hư cấu mỗi kênh. Server gán id và timestamp. Giới hạn
+    body 10 kB và có middleware bắt JSON hỏng trả về 400 { error }.
+  - Validate: hàm thuần validateMessage(body) chỉ nhận text (1 đến 500 ký tự) và
+    author (1 đến 50 ký tự) sau khi trim, bỏ qua mọi field khác như id hay
+    timestamp.
+  - Client: trang Forum ở /forum/:channelId, có nav chuyển kênh, vùng trạng thái
+    aria-live luôn được mount, lỗi hiện role="alert" kèm nút Retry. Không làm
+    form POST phía client vì slide không yêu cầu.
+  - Test: viết test trước cho validateMessage với 10 trường hợp.
+
+  6 commit: docs(spec), test(server), feat(server) (API đầy đủ), feat(forum)
+  hook, style(forum), feat(forum) trang Forum, route và link nav.
+
+  Cần bạn xác nhận 4 điểm:
+  - Q1: Hook trả về dạng 4 trạng thái thay vì chỉ msgs như slide. Đồng ý chứ?
+  - Q2: Test phía server dùng node --test có sẵn của Node, vì Vitest không nằm
+    trong allow-list cho server/. Hay bạn muốn thêm Vitest vào server/?
+  - Q3: Không làm form POST phía client. Đúng ý chưa?
+  - Q4: Route /forum/:channelId và link nav "Forum" trỏ tới /forum/nasa. Được
+    không?
+
+  Bạn commit WBS rồi trả lời Q1 đến Q4 (hoặc nói "theo ý bạn"), tôi sẽ làm từ
+  task 02 trở đi.
+
+  Lệnh commit:
+  git add TASK_DECOMPOSITION.md
+  git commit -m "docs(spec): add WBS for exercise 1.7.1 data fetching and
+  express hygiene"
+
+> làm 17.1 đi
+
+● Tôi làm theo các mặc định của WBS (Q1 đến Q4). Bắt đầu task 1.7.1-02: test
+  trước.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Test đỏ đúng như dự kiến (thiếu module). Task 1.7.1-03: API Express.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Test xanh 10/10. Giờ chạy thật server và thử bằng curl.
+
+  Ran 1 shell command (ctrl+o to expand)
+  ⎿  Blocked by auto mode
+     │ Auto mode: [Interfere With Workloads]
+
+● Lệnh bị từ chối vì tôi định tắt mọi tiến trình node.exe, có thể làm dừng cả
+  dev server của bạn. Tôi sẽ thay bằng một script chỉ tắt đúng server do nó tự
+  khởi chạy. · summary
+
+  Made 1 scratchpad edit +48, ran 1 shell command (ctrl+o to expand)
+
+● Server hoạt động đúng, nhưng CORS luôn trả về http://localhost:5173 nên origin
+  khác vẫn bị trình duyệt chặn; tôi sẽ sửa tiêu chí "không có header" trong
+  WBS, rồi làm phần client. · summary
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Tôi sửa lại tiêu chí CORS trong WBS cho đúng với hành vi của thư viện.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Tôi đã làm xong các task 1.7.1-02 đến 1.7.1-06, chưa commit. Đã kiểm tra: test
+  server xanh 10/10, test client vẫn xanh 6/6, vite build pass, và server chạy
+  thật được thử qua script (bên dưới). Giao diện Forum trên trình duyệt (đổi
+  kênh nhanh, trạng thái lỗi, Retry) tôi chưa mở, bạn tự kiểm tra ở bước
+  1.7.1-07.
+
+  Kết quả thử server thật (script chỉ chạy và tắt đúng tiến trình của nó):
+  - GET kênh nasa trả 200 kèm danh sách tin; kênh không tồn tại trả 404 { error
+    }.
+  - POST hợp lệ trả 201. id và timestamp do server gán, giá trị hack và 1999 mà
+    client gửi bị bỏ qua. Nội dung <img src=x onerror=alert(1)> được lưu nguyên
+    dạng chuỗi.
+  - POST với text rỗng trả 400, JSON hỏng trả 400, kênh sai trả 404.
+  - CORS trả Access-Control-Allow-Origin: http://localhost:5173. Header luôn là
+    origin đã cấu hình, nên trình duyệt từ origin khác sẽ bị chặn. Tôi đã sửa
+    tiêu chí này trong WBS cho khớp.
+
+  Điều tôi đã làm khác lúc đầu: lệnh dọn tiến trình ban đầu của tôi bị hệ thống
+  từ chối vì định tắt mọi node.exe, có thể làm tắt dev server của bạn. Tôi
+  chuyển sang script chỉ tắt đúng tiến trình con, và không còn tiến trình server
+  nào chạy sót.
+
+  File mới và sửa:
+  - Server: server/package.json, server.js, lib/validateMessage.js,
+    lib/store.js, lib/validateMessage.test.js.
+  - Gốc repo: .env.example (PORT, CLIENT_ORIGIN, VITE_API_URL).
+  - Client: hooks/useForumMessages.js, pages/Forum.jsx, pages/Forum.module.css.
+  - Sửa App.jsx (route forum/:channelId) và Layout.jsx (link Forum).
+
+  Điều bạn cần làm trước khi thử trên trình duyệt: tạo 2 file .env (đã bị git bỏ
+  qua) từ .env.example:
+  - server/.env: PORT=3000 và CLIENT_ORIGIN=http://localhost:5173.
+  - client/.env: VITE_API_URL=http://localhost:3000.
+
+  Rồi chạy npm run dev trong cả server/ và client/, mở /forum/nasa.
+
+  Điều tôi chưa chắc: hook gọi setState ở đầu effect để chuyển sang LOADING mỗi
+  khi đổi kênh. Đây là việc bắt đầu fetch nên hợp lệ, nhưng nếu bạn thấy cảnh
+  báo trong React DevTools thì báo tôi.
+
+  Lệnh commit (từ gốc repo, theo thứ tự):
+  git add TASK_DECOMPOSITION.md
+  git commit -m "docs(spec): add WBS for exercise 1.7.1 data fetching and
+  express hygiene"
+
+  git add server/package.json server/lib/validateMessage.test.js
+  git commit -m "test(server): add failing tests for validateMessage"
+
+  git add server/package-lock.json server/server.js
+  server/lib/validateMessage.js server/lib/store.js .env.example
+  git commit -m "feat(server): add express api with cors, validated posts and
+  in-memory store"
+
+  git add client/src/hooks/useForumMessages.js
+  git commit -m "feat(forum): add useForumMessages hook with abortable fetch"
+
+  git add client/src/pages/Forum.module.css
+  git commit -m "style(forum): add responsive forum layout"
+
+  git add client/src/pages/Forum.jsx client/src/App.jsx
+  client/src/components/Layout.jsx
+  git commit -m "feat(forum): add forum page with channel switching and error
+  recovery"
+
+  Vì task 02 (test đỏ) và task 03 (server) nằm trong cùng thư mục, git add ở
+  commit 2 phải chỉ định đúng hai file như trên để không kéo theo code của
+  commit 3. Commit 1 lần này cũng gộp luôn phần sửa tiêu chí CORS vào WBS.
+
+> push lên git hub giúp tôi
+  ⎿  5 skills available
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● Remote còn trống (không có nhánh nào), cây làm việc sạch và không có .env hay
+  node_modules bị theo dõi. Có thể push an toàn.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Đã push nhánh master lên GitHub tại
+  https://github.com/noper1080/MSIS207_24520199_Nguyen_Thanh_Binh_Lab4. Remote
+  trước đó còn trống, nên đây là lần push đầu tiên và không ghi đè gì.
+
+  Trước khi push tôi đã kiểm tra:
+  - Cây làm việc sạch, mọi thay đổi đã được bạn commit.
+  - Không có file .env hay node_modules nào bị git theo dõi.
+
+  Tôi không tạo commit mới nào. Nhánh master giờ đã được theo dõi với
+  origin/master, nên các lần sau chỉ cần git push.
+
+  Lịch sử có hai commit trùng message docs(spec): add WBS for exercise 1.7.1....
+  Không gây lỗi, chỉ là hơi lộn xộn nếu thầy cô đọc lịch sử.
