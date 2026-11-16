@@ -4,6 +4,7 @@ import Layout from './components/Layout.jsx';
 import Skeleton from './components/Skeleton.jsx';
 import { PEOPLE } from './lib/people.js';
 import About from './pages/About.jsx';
+import Forum from './pages/Forum.jsx';
 import Home from './pages/Home.jsx';
 import People from './pages/People.jsx';
 
@@ -25,6 +26,7 @@ export default function App() {
             }
           />
         </Route>
+        <Route path="forum/:channelId" element={<Forum />} />
         <Route path="about" element={<About />} />
       </Route>
     </Routes>

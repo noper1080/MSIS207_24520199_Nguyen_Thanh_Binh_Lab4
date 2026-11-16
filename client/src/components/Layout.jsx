@@ -28,6 +28,14 @@ export default function Layout() {
             </li>
             <li>
               <NavLink
+                to="/forum/nasa"
+                className={({ isActive }) => (isActive ? styles.active : styles.link)}
+              >
+                Forum
+              </NavLink>
+            </li>
+            <li>
+              <NavLink
                 to="/about"
                 className={({ isActive }) => (isActive ? styles.active : styles.link)}
               >
