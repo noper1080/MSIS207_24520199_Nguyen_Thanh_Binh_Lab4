@@ -498,7 +498,7 @@ Out of scope (not in the screenshot): MongoDB, authentication, a client-side POS
   - `GET` on each channel returns 200 with the seeded messages; an unknown channel returns 404 `{ error }`.
   - `POST` with a valid body returns 201 with a server-assigned `id` and `timestamp`; invalid bodies return 400 `{ error }`; a malformed JSON body returns 400 `{ error }`; an unknown channel returns 404.
   - A `POST` containing `id` or `timestamp` ignores them.
-  - A response to a request from `http://localhost:5173` carries the CORS header; another origin does not.
+  - Every response carries `Access-Control-Allow-Origin` equal to the configured `CLIENT_ORIGIN` (default `http://localhost:5173`), so a browser page from any other origin is blocked.
   - No `require()`, no hardcoded secrets, no `dotenv`.
 - **Verification:** `curl` against the running server for each case above; check the `Access-Control-Allow-Origin` header.
 - **Commit:** `feat(server): add express api with cors, validated posts and in-memory store`
@@ -539,7 +539,7 @@ Out of scope (not in the screenshot): MongoDB, authentication, a client-side POS
   1. `npm test` in `server/` and `npx vitest run` in `client/` are green.
   2. Fast channel switching on Slow 3G: earlier requests show `canceled`, no error is displayed for them, the final list matches the last chosen channel.
   3. Stop the server: the error state shows; restart and Retry recovers.
-  4. CORS: the page loads data from `http://localhost:5173` to the server; `curl -H "Origin: https://example.org"` gets no CORS header.
+  4. CORS: the page loads data from `http://localhost:5173` to the server; a page served from another origin cannot read the response, because the returned header never matches it.
   5. Sec. 13 checkpoints: banned-pattern `git grep`, `http://` outside localhost, no tracked `.env`.
   6. Console: zero warnings in StrictMode.
 - **Commit:** none.
